@@ -20,7 +20,10 @@ local function render_selection_to_audio()
   local start_pos = renoise.SongPos(song.selected_sequence_index, sel.start_line)
   local end_pos = renoise.SongPos(song.selected_sequence_index, sel.end_line)
 
-  local file = renoise.app():prompt_for_filename_to_write("wav")
+  -- prompt for output filename, require an extension and title
+  local file = renoise.app():prompt_for_filename_to_write(
+    "wav",
+    "Render Selection To Audio")
   if not file then return end
 
   local options = {
