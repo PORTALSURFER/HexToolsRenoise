@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RenoiseScriptingTool doc_version="0">
+  <ApiVersion>6</ApiVersion>
+  <Author>Hex</Author>
+  <Id>com.hex.HexTools</Id>
+  <Name>Hello World Tool</Name>
+  <Version>1.0</Version>
+  <Description>Displays a Hello World message via a menu item.</Description>
+</RenoiseScriptingTool>

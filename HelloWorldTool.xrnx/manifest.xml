@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<tool>
-  <id>com.example.HelloWorld</id>
-  <name>Hello World Tool</name>
-  <version>1.0</version>
-  <author>HexToolsRenoise</author>
-  <description>Displays a Hello World message via a menu item.</description>
-  <autostart>main.lua</autostart>
-</tool>
