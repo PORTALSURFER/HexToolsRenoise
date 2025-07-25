@@ -6,4 +6,12 @@
   <Name>Hello World Tool</Name>
   <Version>1.0</Version>
   <Description>Displays a Hello World message via a menu item.</Description>
+  <KeyBindings>
+    <Bindings>
+      <Binding>
+        <Path>Pattern Editor:Tools:Play And Return Toggle</Path>
+        <Invoke>play_and_return_toggle</Invoke>
+      </Binding>
+    </Bindings>
+  </KeyBindings>
 </RenoiseScriptingTool>
