@@ -76,6 +76,11 @@ function M.register_menu_and_keybindings(handlers)
   }
 
   renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Toggle Auto-Collapse Before Jump",
+    invoke = handlers.toggle_auto_collapse_before_jump
+  }
+
+  renoise.tool():add_menu_entry{
     name = "Instrument Box:Remap Selected Notes to This",
     invoke = handlers.remap_selected_notes_to_this
   }
@@ -155,6 +160,10 @@ function M.register_menu_and_keybindings(handlers)
   renoise.tool():add_keybinding {
     name = "Pattern Editor:Tools:Jump To Previous Track (Skip Collapsed)",
     invoke = handlers.jump_to_previous_track
+  }
+  renoise.tool():add_keybinding {
+    name = "Pattern Editor:Tools:Toggle Auto-Collapse Before Jump",
+    invoke = handlers.toggle_auto_collapse_before_jump
   }
   renoise.tool():add_menu_entry{
     name = "Pattern Editor:Focus Automation Editor for Selection",

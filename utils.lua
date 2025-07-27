@@ -76,6 +76,8 @@ M.export_keybindings_md = export_keybindings_md
 
 local last_collapsed_pattern_idx = nil
 local reorder_collapsed_tracks = false -- Reordering disabled (too slow); set to true to enable
+local auto_collapse_before_jump = true -- Auto-collapse before jumping (default: true)
+local pattern_collapsed_state = {} -- Track collapsed state per pattern
 
 
 -- Track colors (RGB 0-255)
@@ -108,6 +110,8 @@ local function collapse_unused_tracks_in_pattern()
         end
       end
     end
+    -- Track that this pattern is now in collapsed state
+    pattern_collapsed_state[patt_idx] = true
     -- Reorder: move all collapsed tracks to the right, preserving order, but only within sequencer tracks
     if reorder_collapsed_tracks then
       local last_seq_idx = 0
@@ -213,6 +217,8 @@ local function collapse_unused_tracks_in_pattern()
         end
       end
     end
+    -- Track that this pattern is now in expanded state
+    pattern_collapsed_state[patt_idx] = false
     renoise.app():show_status("Expanded all tracks.")
   else
     -- Collapse unused tracks as before
@@ -268,6 +274,8 @@ local function collapse_unused_tracks_in_pattern()
         end
       end
     end
+    -- Track that this pattern is now in collapsed state
+    pattern_collapsed_state[patt_idx] = true
     renoise.app():show_status("Collapsed unused tracks in current pattern and moved them to the right.")
   end
   last_collapsed_pattern_idx = patt_idx
@@ -275,9 +283,22 @@ end
 
 M.collapse_unused_tracks_in_pattern = collapse_unused_tracks_in_pattern
 
+-- Check if current pattern is in collapsed state
+local function is_pattern_collapsed()
+  local song = renoise.song()
+  local patt_idx = song.selected_pattern_index
+  return pattern_collapsed_state[patt_idx] == true
+end
+
 -- Jump to next non-collapsed track
 local function jump_to_next_track()
   local song = renoise.song()
+  
+  -- Auto-collapse before jumping if enabled and pattern is not collapsed
+  if auto_collapse_before_jump and not is_pattern_collapsed() then
+    collapse_unused_tracks_in_pattern()
+  end
+  
   local current_track = song.selected_track_index
   local total_tracks = #song.tracks
   
@@ -307,6 +328,12 @@ end
 -- Jump to previous non-collapsed track
 local function jump_to_previous_track()
   local song = renoise.song()
+  
+  -- Auto-collapse before jumping if enabled and pattern is not collapsed
+  if auto_collapse_before_jump and not is_pattern_collapsed() then
+    collapse_unused_tracks_in_pattern()
+  end
+  
   local current_track = song.selected_track_index
   local total_tracks = #song.tracks
   
@@ -335,5 +362,15 @@ end
 
 M.jump_to_next_track = jump_to_next_track
 M.jump_to_previous_track = jump_to_previous_track
+
+-- Toggle auto-collapse before jump option
+local function toggle_auto_collapse_before_jump()
+  auto_collapse_before_jump = not auto_collapse_before_jump
+  local status = auto_collapse_before_jump and "enabled" or "disabled"
+  renoise.app():show_status("Auto-collapse before jump: " .. status)
+end
+
+M.toggle_auto_collapse_before_jump = toggle_auto_collapse_before_jump
+M.is_pattern_collapsed = is_pattern_collapsed
 
 return M 

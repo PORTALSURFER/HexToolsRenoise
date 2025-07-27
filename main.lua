@@ -125,6 +125,10 @@ local function jump_to_previous_track()
   utils.jump_to_previous_track()
 end
 
+local function toggle_auto_collapse_before_jump()
+  utils.toggle_auto_collapse_before_jump()
+end
+
 local pending_return_state = nil
 
 local registration = require("registration")
@@ -152,5 +156,6 @@ registration.register_menu_and_keybindings({
   export_keybindings_md = export_keybindings_md,
   collapse_unused_tracks_in_pattern = collapse_unused_tracks_in_pattern,
   jump_to_next_track = jump_to_next_track,
-  jump_to_previous_track = jump_to_previous_track
+  jump_to_previous_track = jump_to_previous_track,
+  toggle_auto_collapse_before_jump = toggle_auto_collapse_before_jump
 })

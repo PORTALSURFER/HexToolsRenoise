@@ -9,6 +9,12 @@ Collection of useful tools for the Renoise digital audio workstation.
 
 HexTools adds the following utilities and workflow enhancements to Renoise:
 
+### **Track Management & Navigation**
+- **Smart Track Collapsing**: Automatically collapse unused tracks with color coding (orange for active, dark grey for collapsed)
+- **Intelligent Track Navigation**: Jump between tracks while skipping collapsed ones
+- **Auto-Collapse Before Jump**: Automatically collapse tracks before navigation (toggleable)
+- **Pattern State Tracking**: Remembers collapsed/expanded state per pattern
+
 - **Render Selection to New Track**: Renders the current pattern selection to a new instrument and track, inserting a C-4 note. Optionally, the original selection can be cleared (destructive render).
 - **Render Selection to Next Track**: Renders the current pattern selection to a new instrument and the next existing track, inserting a C-4 note. Optionally, the original selection can be cleared (destructive render).
 - **Playhead Buffering**: Store the current playhead position and return to it later, or play from a buffered position.
@@ -25,8 +31,19 @@ HexTools adds the following utilities and workflow enhancements to Renoise:
   - Convert automation envelopes to pattern data (and remove the envelope).
   - Convert pattern effect columns to automation envelopes (and clear the effect columns).
 - **Menu Integration**: All features are accessible from the Renoise Tools menu or Pattern Editor context menus.
-- **Track Visibility Toggle**:
-  - Collapse all unused tracks in the current pattern, or expand all tracks if any are collapsed. Accessible from the Tools menu, Pattern Editor toolbar, and key bindings.
+
+## Usage Tips
+
+### **Track Navigation Workflow**
+1. **Collapse unused tracks** using the collapse tool (tracks turn orange/dark grey)
+2. **Jump between active tracks** using the jump functions (automatically skips collapsed tracks)
+3. **Toggle auto-collapse** if you want manual control over when tracks collapse
+
+### **Recommended Keybindings**
+- `Ctrl+Right Arrow` - Jump to next track (skip collapsed)
+- `Ctrl+Left Arrow` - Jump to previous track (skip collapsed)
+- `Ctrl+Shift+C` - Toggle track collapse/expand
+- `Ctrl+Shift+A` - Toggle auto-collapse before jump
 
 ## Keymaps
 
@@ -50,6 +67,9 @@ All features below can be mapped to custom keys in Renoise via the Preferences >
 - `Pattern Editor:Tools:Convert Automation To Pattern`
 - `Pattern Editor:Tools:Convert Pattern To Automation`
 - `Pattern Editor:Tools:Collapse Unused Tracks in Pattern` *(toggles collapse/expand)*
+- `Pattern Editor:Tools:Jump To Next Track (Skip Collapsed)`
+- `Pattern Editor:Tools:Jump To Previous Track (Skip Collapsed)`
+- `Pattern Editor:Tools:Toggle Auto-Collapse Before Jump`
 
 ## Installation
 
