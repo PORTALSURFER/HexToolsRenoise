@@ -84,6 +84,10 @@ local function prompt_and_remap_instruments()
   instrument_utils.prompt_and_remap_instruments()
 end
 
+local function remap_selected_notes_to_this()
+  instrument_utils.remap_selected_notes_to_this()
+end
+
 local pending_return_state = nil
 
 local registration = require("registration")
@@ -98,5 +102,6 @@ registration.register_menu_and_keybindings({
   jump_to_test_position = jump_to_test_position,
   find_duplicate_single_sample_instruments = find_duplicate_single_sample_instruments,
   prompt_and_merge_instruments = prompt_and_merge_instruments,
-  prompt_and_remap_instruments = prompt_and_remap_instruments
+  prompt_and_remap_instruments = prompt_and_remap_instruments,
+  remap_selected_notes_to_this = remap_selected_notes_to_this
 })

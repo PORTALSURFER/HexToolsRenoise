@@ -51,6 +51,11 @@ function M.register_menu_and_keybindings(handlers)
     invoke = handlers.prompt_and_remap_instruments
   }
 
+  renoise.tool():add_menu_entry{
+    name = "Instrument Box:Remap Selected Notes to This",
+    invoke = handlers.remap_selected_notes_to_this
+  }
+
   renoise.tool():add_keybinding {
     name = "Pattern Editor:Tools:Play And Return Toggle",
     invoke = handlers.play_and_return_toggle
