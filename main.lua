@@ -141,6 +141,10 @@ local pending_return_state = nil
 
 local registration = require("registration")
 
+local function toggle_auto_collapse_on_focus_loss()
+  utils.toggle_auto_collapse_on_focus_loss()
+end
+
 registration.register_menu_and_keybindings({
   show_hello = show_hello,
   render_selection_to_new_track = render_selection_to_new_track,
@@ -167,5 +171,10 @@ registration.register_menu_and_keybindings({
   jump_to_previous_track = jump_to_previous_track,
   jump_to_next_collapsed_track = jump_to_next_collapsed_track,
   jump_to_previous_collapsed_track = jump_to_previous_collapsed_track,
-  toggle_auto_collapse_before_jump = toggle_auto_collapse_before_jump
+  toggle_auto_collapse_before_jump = toggle_auto_collapse_before_jump,
+  toggle_auto_collapse_on_focus_loss = toggle_auto_collapse_on_focus_loss
 })
+
+-- Set up notifier for track selection changes
+local song = renoise.song()
+song.selected_track_index_observable:add_notifier(utils.handle_track_focus_change)

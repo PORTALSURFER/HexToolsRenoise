@@ -84,6 +84,7 @@ local auto_collapse_before_jump    = true
 local pattern_collapsed_state      = {}
 local last_jumped_track            = nil
 local last_jumped_track_was_empty  = nil
+local auto_collapse_on_focus_loss  = true  -- new setting
 
 -- colours
 local active_track_color    = {255, 100, 0}
@@ -318,6 +319,39 @@ M.jump_to_next_collapsed_track     = jump_to_next_collapsed_track
 M.jump_to_previous_collapsed_track = jump_to_previous_collapsed_track
 
 ----------------------------------------------------------------------
+-- focus loss detection and auto-collapse
+----------------------------------------------------------------------
+local function check_and_auto_collapse_focused_track()
+  if not auto_collapse_on_focus_loss or not last_jumped_track then 
+    return 
+  end
+
+  local song = renoise.song()
+  local current_track = song.selected_track_index
+  
+  -- If we're no longer on the jumped track, handle the focus loss
+  if current_track ~= last_jumped_track then
+    local track = song.tracks[last_jumped_track]
+    if track and track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
+      -- Check if the track still has no notes (was empty when we jumped to it)
+      if last_jumped_track_was_empty and not track_has_notes(last_jumped_track) then
+        track.collapsed = true
+        track.color = collapsed_track_color
+      elseif track_has_notes(last_jumped_track) then
+        track.color = active_track_color
+      end
+    end
+    last_jumped_track, last_jumped_track_was_empty = nil, nil
+  end
+end
+
+-- Function to be called when track selection changes
+local function handle_track_focus_change()
+  check_and_auto_collapse_focused_track()
+end
+M.handle_track_focus_change = handle_track_focus_change
+
+----------------------------------------------------------------------
 -- misc
 ----------------------------------------------------------------------
 local function toggle_auto_collapse_before_jump()
@@ -325,7 +359,15 @@ local function toggle_auto_collapse_before_jump()
   renoise.app():show_status(
     "Auto‑collapse before jump: " .. (auto_collapse_before_jump and "enabled" or "disabled"))
 end
+
+local function toggle_auto_collapse_on_focus_loss()
+  auto_collapse_on_focus_loss = not auto_collapse_on_focus_loss
+  renoise.app():show_status(
+    "Auto‑collapse on focus loss: " .. (auto_collapse_on_focus_loss and "enabled" or "disabled"))
+end
+
 M.toggle_auto_collapse_before_jump = toggle_auto_collapse_before_jump
+M.toggle_auto_collapse_on_focus_loss = toggle_auto_collapse_on_focus_loss
 M.is_pattern_collapsed             = is_pattern_collapsed
 
 return M

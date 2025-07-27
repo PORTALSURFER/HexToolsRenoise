@@ -95,6 +95,11 @@ function M.register_menu_and_keybindings(handlers)
     invoke = handlers.remap_selected_notes_to_this
   }
 
+  renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Toggle Auto-Collapse On Focus Loss",
+    invoke = handlers.toggle_auto_collapse_on_focus_loss
+  }
+
   renoise.tool():add_keybinding {
     name = "Pattern Editor:Tools:Set Playhead Buffer",
     invoke = handlers.set_playhead_buffer
@@ -182,6 +187,10 @@ function M.register_menu_and_keybindings(handlers)
   renoise.tool():add_keybinding {
     name = "Pattern Editor:Tools:Jump To Previous Collapsed Track",
     invoke = handlers.jump_to_previous_collapsed_track
+  }
+  renoise.tool():add_keybinding {
+    name = "Pattern Editor:Tools:Toggle Auto-Collapse On Focus Loss",
+    invoke = handlers.toggle_auto_collapse_on_focus_loss
   }
   renoise.tool():add_menu_entry{
     name = "Pattern Editor:Focus Automation Editor for Selection",
