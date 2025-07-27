@@ -392,4 +392,81 @@ function M.focus_automation_editor_for_selection()
   renoise.app():show_status("Focused automation editor for selection.")
 end
 
+function M.convert_automation_to_pattern()
+  local song = renoise.song()
+  local track_idx = song.selected_track_index
+  local patt_idx = song.selected_pattern_index
+  local pattern = song:pattern(patt_idx)
+  local track = pattern:track(track_idx)
+  local sel = song.selection_in_pattern
+  if not sel then
+    renoise.app():show_status("No selection in pattern editor.")
+    return
+  end
+  -- Find the first automation in this pattern/track
+  local automation = nil
+  local device_idx, param_idx = nil, nil
+  for d = 1, #song.tracks[track_idx].devices do
+    local device = song.tracks[track_idx].devices[d]
+    for p = 1, #device.parameters do
+      local param = device:parameter(p)
+      local auto = track:find_automation(param)
+      if auto and #auto.points > 0 then
+        automation = auto
+        device_idx = d
+        param_idx = p
+        break
+      end
+    end
+    if automation then break end
+  end
+  if not automation then
+    renoise.app():show_status("No automation found in selected track/pattern.")
+    return
+  end
+  local points = automation.points
+  -- Interpolate automation for every line in the selection
+  for line_idx = sel.start_line, sel.end_line do
+    local value = 0
+    if #points == 1 then
+      value = points[1].value
+    elseif line_idx <= points[1].time then
+      value = points[1].value
+    elseif line_idx >= points[#points].time then
+      value = points[#points].value
+    else
+      for i = 1, #points - 1 do
+        local pt1 = points[i]
+        local pt2 = points[i + 1]
+        if line_idx >= pt1.time and line_idx <= pt2.time then
+          local t = (line_idx - pt1.time) / (pt2.time - pt1.time)
+          value = pt1.value + (pt2.value - pt1.value) * t
+          break
+        end
+      end
+    end
+    if value > 0 then
+      local line = track:line(line_idx)
+      -- Find a free effect column
+      local fx_col = nil
+      for ec = 1, #line.effect_columns do
+        if line:effect_column(ec).is_empty then
+          fx_col = line:effect_column(ec)
+          break
+        end
+      end
+      if fx_col then
+        local scaled = math.floor(value * 255 + 0.5)
+        fx_col.number_value = (device_idx - 1) * 16 + (param_idx - 1)
+        fx_col.amount_value = scaled
+      end
+    end
+  end
+  -- Remove the automation curve after conversion
+  if automation then
+    track:delete_automation(automation.dest_parameter)
+  end
+  renoise.app():show_status("Interpolated automation to pattern effect columns and removed automation curve.")
+end
+
 return M 

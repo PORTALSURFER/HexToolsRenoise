@@ -92,6 +92,10 @@ local function focus_automation_editor_for_selection()
   instrument_utils.focus_automation_editor_for_selection()
 end
 
+local function convert_automation_to_pattern()
+  instrument_utils.convert_automation_to_pattern()
+end
+
 local pending_return_state = nil
 
 local registration = require("registration")
@@ -112,5 +116,6 @@ registration.register_menu_and_keybindings({
   decrease_velocity = instrument_utils.decrease_velocity,
   increase_velocity_sensitive = instrument_utils.increase_velocity_sensitive,
   decrease_velocity_sensitive = instrument_utils.decrease_velocity_sensitive,
-  focus_automation_editor_for_selection = focus_automation_editor_for_selection
+  focus_automation_editor_for_selection = focus_automation_editor_for_selection,
+  convert_automation_to_pattern = convert_automation_to_pattern
 })

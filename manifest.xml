@@ -60,6 +60,10 @@
         <Path>Pattern Editor:Tools:Focus Automation Editor for Selection</Path>
         <Invoke>focus_automation_editor_for_selection</Invoke>
       </Binding>
+      <Binding>
+        <Path>Pattern Editor:Tools:Convert Automation To Pattern</Path>
+        <Invoke>convert_automation_to_pattern</Invoke>
+      </Binding>
     </Bindings>
   </KeyBindings>
 </RenoiseScriptingTool>
