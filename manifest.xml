@@ -3,14 +3,30 @@
   <ApiVersion>6</ApiVersion>
   <Author>Hex</Author>
   <Id>com.hex.HexTools</Id>
-  <Name>Hello World Tool</Name>
+  <Name>HeTools</Name>
   <Version>1.0</Version>
-  <Description>Displays a Hello World message via a menu item.</Description>
+  <Description>Collection of useful tools for Renoise.</Description>
   <KeyBindings>
     <Bindings>
       <Binding>
         <Path>Pattern Editor:Tools:Play And Return Toggle</Path>
         <Invoke>play_and_return_toggle</Invoke>
+      </Binding>
+      <Binding>
+        <Path>Pattern Editor:Tools:Render Selection To New Track</Path>
+        <Invoke>render_selection_to_new_track</Invoke>
+      </Binding>
+      <Binding>
+        <Path>Pattern Editor:Tools:Render Selection To New Track Destructive</Path>
+        <Invoke>render_selection_to_new_track_destructive</Invoke>
+      </Binding>
+      <Binding>
+        <Path>Pattern Editor:Tools:Render Selection To Next Track</Path>
+        <Invoke>render_selection_to_next_track</Invoke>
+      </Binding>
+      <Binding>
+        <Path>Pattern Editor:Tools:Render Selection To Next Track Destructive</Path>
+        <Invoke>render_selection_to_next_track_destructive</Invoke>
       </Binding>
     </Bindings>
   </KeyBindings>
