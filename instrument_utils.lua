@@ -609,7 +609,12 @@ function M.convert_pattern_to_automation()
       end
       local value
       if max_vol then
-        value = max_vol / 127
+        -- Treat near-zero volumes (≤ 02 hex) as silence (0.0)
+        if max_vol <= 2 then
+          value = 0.0
+        else
+          value = max_vol / 127
+        end
       elseif has_zero then
         value = 0.0
       else
@@ -622,7 +627,7 @@ function M.convert_pattern_to_automation()
         last_val = value
       end
     end
-    for _, pt in ipairs(simplify_points(points, 0.008)) do
+    for _, pt in ipairs(simplify_points(points, 0.02)) do
       auto:add_point_at(pt.line, pt.value)
     end
   else
