@@ -101,11 +101,6 @@ function M.register_menu_and_keybindings(handlers)
   }
 
   renoise.tool():add_menu_entry{
-    name = "Track:Sample And Merge Track Notes",
-    invoke = handlers.sample_and_merge_track_notes
-  }
-
-  renoise.tool():add_menu_entry{
     name = "Main Menu:Tools:HexTools:Toggle Auto-Collapse On Focus Loss",
     invoke = handlers.toggle_auto_collapse_on_focus_loss
   }
@@ -217,6 +212,11 @@ function M.register_menu_and_keybindings(handlers)
   renoise.tool():add_menu_entry{
     name = "Pattern Editor:Convert Pattern To Automation",
     invoke = handlers.convert_pattern_to_automation
+  }
+
+  renoise.tool():add_menu_entry{
+    name = "--- Pattern Editor:Sample And Merge Track Notes",
+    invoke = handlers.sample_and_merge_track_notes
   }
 end
 
