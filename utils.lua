@@ -275,4 +275,65 @@ end
 
 M.collapse_unused_tracks_in_pattern = collapse_unused_tracks_in_pattern
 
+-- Jump to next non-collapsed track
+local function jump_to_next_track()
+  local song = renoise.song()
+  local current_track = song.selected_track_index
+  local total_tracks = #song.tracks
+  
+  -- Start from the next track
+  for i = current_track + 1, total_tracks do
+    local track = song.tracks[i]
+    if track.type == renoise.Track.TRACK_TYPE_SEQUENCER and not track.collapsed then
+      song.selected_track_index = i
+      renoise.app():show_status("Jumped to next track: " .. i)
+      return
+    end
+  end
+  
+  -- If no next track found, wrap around to the beginning
+  for i = 1, current_track - 1 do
+    local track = song.tracks[i]
+    if track.type == renoise.Track.TRACK_TYPE_SEQUENCER and not track.collapsed then
+      song.selected_track_index = i
+      renoise.app():show_status("Jumped to next track (wrapped): " .. i)
+      return
+    end
+  end
+  
+  renoise.app():show_status("No other non-collapsed tracks found")
+end
+
+-- Jump to previous non-collapsed track
+local function jump_to_previous_track()
+  local song = renoise.song()
+  local current_track = song.selected_track_index
+  local total_tracks = #song.tracks
+  
+  -- Start from the previous track
+  for i = current_track - 1, 1, -1 do
+    local track = song.tracks[i]
+    if track.type == renoise.Track.TRACK_TYPE_SEQUENCER and not track.collapsed then
+      song.selected_track_index = i
+      renoise.app():show_status("Jumped to previous track: " .. i)
+      return
+    end
+  end
+  
+  -- If no previous track found, wrap around to the end
+  for i = total_tracks, current_track + 1, -1 do
+    local track = song.tracks[i]
+    if track.type == renoise.Track.TRACK_TYPE_SEQUENCER and not track.collapsed then
+      song.selected_track_index = i
+      renoise.app():show_status("Jumped to previous track (wrapped): " .. i)
+      return
+    end
+  end
+  
+  renoise.app():show_status("No other non-collapsed tracks found")
+end
+
+M.jump_to_next_track = jump_to_next_track
+M.jump_to_previous_track = jump_to_previous_track
+
 return M 

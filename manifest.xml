@@ -72,6 +72,14 @@
         <Path>Pattern Editor:Tools:Collapse Unused Tracks in Pattern</Path>
         <Invoke>collapse_unused_tracks_in_pattern</Invoke>
       </Binding>
+      <Binding>
+        <Path>Pattern Editor:Tools:Jump To Next Track (Skip Collapsed)</Path>
+        <Invoke>jump_to_next_track</Invoke>
+      </Binding>
+      <Binding>
+        <Path>Pattern Editor:Tools:Jump To Previous Track (Skip Collapsed)</Path>
+        <Invoke>jump_to_previous_track</Invoke>
+      </Binding>
     </Bindings>
   </KeyBindings>
 </RenoiseScriptingTool>

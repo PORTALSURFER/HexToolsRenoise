@@ -117,6 +117,14 @@ local function collapse_unused_tracks_in_pattern()
   utils.collapse_unused_tracks_in_pattern()
 end
 
+local function jump_to_next_track()
+  utils.jump_to_next_track()
+end
+
+local function jump_to_previous_track()
+  utils.jump_to_previous_track()
+end
+
 local pending_return_state = nil
 
 local registration = require("registration")
@@ -142,5 +150,7 @@ registration.register_menu_and_keybindings({
   convert_automation_to_pattern = convert_automation_to_pattern,
   convert_pattern_to_automation = convert_pattern_to_automation,
   export_keybindings_md = export_keybindings_md,
-  collapse_unused_tracks_in_pattern = collapse_unused_tracks_in_pattern
+  collapse_unused_tracks_in_pattern = collapse_unused_tracks_in_pattern,
+  jump_to_next_track = jump_to_next_track,
+  jump_to_previous_track = jump_to_previous_track
 })

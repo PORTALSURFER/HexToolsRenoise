@@ -66,6 +66,16 @@ function M.register_menu_and_keybindings(handlers)
   }
 
   renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Jump To Next Track (Skip Collapsed)",
+    invoke = handlers.jump_to_next_track
+  }
+
+  renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Jump To Previous Track (Skip Collapsed)",
+    invoke = handlers.jump_to_previous_track
+  }
+
+  renoise.tool():add_menu_entry{
     name = "Instrument Box:Remap Selected Notes to This",
     invoke = handlers.remap_selected_notes_to_this
   }
@@ -137,6 +147,14 @@ function M.register_menu_and_keybindings(handlers)
   renoise.tool():add_keybinding {
     name = "Pattern Editor:Tools:Collapse Unused Tracks in Pattern",
     invoke = handlers.collapse_unused_tracks_in_pattern
+  }
+  renoise.tool():add_keybinding {
+    name = "Pattern Editor:Tools:Jump To Next Track (Skip Collapsed)",
+    invoke = handlers.jump_to_next_track
+  }
+  renoise.tool():add_keybinding {
+    name = "Pattern Editor:Tools:Jump To Previous Track (Skip Collapsed)",
+    invoke = handlers.jump_to_previous_track
   }
   renoise.tool():add_menu_entry{
     name = "Pattern Editor:Focus Automation Editor for Selection",
