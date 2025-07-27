@@ -1,6 +1,5 @@
 local M = {}
-
-local DEBUG = false
+local utils = require("utils")
 
 -- List duplicate instruments (all samples match, skipping empty and plugin instruments), indices as HEX, compare by waveform only, display indices -1
 function M.list_duplicate_instruments_by_samples()
@@ -313,18 +312,18 @@ function M.remap_selected_notes_to_this()
   for track_idx = start_track, end_track do
     local patt = song:pattern(song.selected_pattern_index)
     local track = patt:track(track_idx)
-    if DEBUG then
+    if utils.DEBUG then
       msg = msg .. string.format("Track %d:\n", track_idx)
     end
     for line_idx = sel.start_line, sel.end_line do
       local line = track:line(line_idx)
-      if DEBUG then
+      if utils.DEBUG then
         msg = msg .. string.format("  Line %d: %d note columns\n", line_idx, #line.note_columns)
       end
       for nc = 1, #line.note_columns do
         local col = line.note_columns[nc]
         if col.instrument_value ~= 255 then
-          if DEBUG then
+          if utils.DEBUG then
             msg = msg .. string.format("    Col %d: note_value=%s, instr=%02X\n", nc, tostring(col.note_value), col.instrument_value)
           else
             if col.note_value ~= 121 then -- not empty
@@ -335,8 +334,8 @@ function M.remap_selected_notes_to_this()
       end
     end
   end
-  if DEBUG then
-    renoise.app():show_message(msg)
+  if utils.DEBUG then
+    utils.debug_messagebox(msg)
   else
     renoise.app():show_status("Remapped selected notes to instrument " .. string.format("%02X", target_instr))
   end
