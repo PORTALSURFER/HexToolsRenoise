@@ -525,6 +525,30 @@ function M.convert_automation_to_pattern()
   renoise.app():show_status("Interpolated automation to pattern and removed automation curve.")
 end
 
+-- Utility: removes perfectly collinear interior points to minimise automation density
+local function simplify_points(points, eps)
+  eps = eps or 1e-7
+  if #points <= 2 then return points end
+  local simplified = {points[1]}
+  for i = 2, #points - 1 do
+    local prev = simplified[#simplified]
+    local curr = points[i]
+    local nxt  = points[i + 1]
+    -- Guard against division-by-zero when two points share the same line
+    if nxt.line == prev.line then
+      table.insert(simplified, curr)
+    else
+      local t = (curr.line - prev.line) / (nxt.line - prev.line)
+      local interp = prev.value + (nxt.value - prev.value) * t
+      if math.abs(curr.value - interp) > eps then
+        table.insert(simplified, curr)
+      end
+    end
+  end
+  table.insert(simplified, points[#points])
+  return simplified
+end
+
 function M.convert_pattern_to_automation()
   local song = renoise.song()
   local track_idx = song.selected_track_index
@@ -545,7 +569,7 @@ function M.convert_pattern_to_automation()
       if not fx_col.is_empty then
         local num = fx_col.number_value
         device_idx = math.floor(num / 16) + 1
-        param_idx = (num % 16) + 1
+        param_idx  = (num % 16) + 1
         break
       end
     end
@@ -555,76 +579,59 @@ function M.convert_pattern_to_automation()
     renoise.app():show_status("No effect column parameter found in selection.")
     return
   end
+
   local device = song.tracks[track_idx].devices[device_idx]
-  local param = device:parameter(param_idx)
-  -- Determine if this is track volume automation
-  local is_track_volume = false
-  local prefx_param_name = song.tracks[track_idx].prefx_volume.name
-  if param.name == prefx_param_name then
-    is_track_volume = true
-  end
-  -- Create or clear automation for this parameter
-  local auto = track:find_automation(param)
-  if not auto then
-    auto = track:create_automation(param)
-  else
-    auto:clear()
-  end
+  local param  = device:parameter(param_idx)
+  local is_track_volume = (param.name == song.tracks[track_idx].prefx_volume.name)
+
+  -- (Re)create automation envelope
+  local auto = track:find_automation(param) or track:create_automation(param)
+  auto:clear()
+
   if is_track_volume then
-    -- First pass: buffer states
-    local buffer = {}
+    ------------------------------------------------------------------
+    -- Track-volume branch: derive value from note-column volume (0-127)
+    ------------------------------------------------------------------
+    local points = {}
+    -- Default starting value is full volume (1.0)
+    local last_val = nil
+
     for line_idx = sel.start_line, sel.end_line do
       local line = track:line(line_idx)
-      local max_vol = nil
-      local has_zero = false
-      local all_empty = true
+      local max_vol, has_zero = nil, false
       for nc = 1, #line.note_columns do
-        local col = line.note_columns[nc]
-        if col.volume_value == 0 then
+        local v = line:note_column(nc).volume_value
+        if v == 0 then
           has_zero = true
-          all_empty = false
-        elseif col.volume_value > 0 and col.volume_value < 127 then
-          if not max_vol or col.volume_value > max_vol then
-            max_vol = col.volume_value
-          end
-          all_empty = false
-        elseif col.volume_value == 255 then
-          -- ..
+        elseif v > 0 and v < 127 then
+          max_vol = max_vol and math.max(max_vol, v) or v
         end
       end
+      local value
       if max_vol then
-        table.insert(buffer, {type = 'nonzero', value = max_vol / 127, line = line_idx})
+        value = max_vol / 127
       elseif has_zero then
-        table.insert(buffer, {type = 'zero', value = 0.0, line = line_idx})
-      elseif all_empty then
-        table.insert(buffer, {type = 'empty', value = 1.0, line = line_idx})
+        value = 0.0
+      else
+        value = last_val or 1.0 -- treat "empty" as no change; default 1.0 at start
+      end
+
+      -- Always emit the very first point so the envelope has a start anchor
+      if line_idx == sel.start_line or value ~= last_val then
+        table.insert(points, { line = line_idx, value = value })
+        last_val = value
       end
     end
-    -- Second pass: process buffer and emit automation points
-    local last_type = nil
-    for i, entry in ipairs(buffer) do
-      if entry.type == 'nonzero' then
-        auto:add_point_at(entry.line, entry.value)
-        last_type = 'nonzero'
-      elseif entry.type == 'zero' then
-        if last_type == 'nonzero' or last_type == 'empty' then
-          auto:add_point_at(entry.line, 0.0)
-          last_type = 'zero'
-        end
-        -- skip consecutive zero
-      elseif entry.type == 'empty' then
-        if last_type == 'nonzero' or last_type == nil then
-          auto:add_point_at(entry.line, 1.0)
-          last_type = 'empty'
-        end
-        -- skip consecutive empty or empty after zero
-      end
+    for _, pt in ipairs(simplify_points(points, 0.008)) do
+      auto:add_point_at(pt.line, pt.value)
     end
   else
-    -- For each line, if effect column matches, add automation point
+    ------------------------------------------------------------------
+    -- Generic parameter branch: gather values from matching FX columns
+    ------------------------------------------------------------------
+    local points = {}
     for line_idx = sel.start_line, sel.end_line do
       local line = track:line(line_idx)
-      local value = nil
       for ec = 1, #line.effect_columns do
         local fx_col = line:effect_column(ec)
         if not fx_col.is_empty then
@@ -632,18 +639,21 @@ function M.convert_pattern_to_automation()
           local d_idx = math.floor(num / 16) + 1
           local p_idx = (num % 16) + 1
           if d_idx == device_idx and p_idx == param_idx then
-            value = fx_col.amount_value / 255
-            -- Remove the effect column value after conversion
-            fx_col:clear()
+            table.insert(points, {
+              line  = line_idx,
+              value = fx_col.amount_value / 255
+            })
+            fx_col:clear() -- tidy up pattern after conversion
             break
           end
         end
       end
-      if value then
-        auto:add_point_at(line_idx, value)
-      end
+    end
+    for _, pt in ipairs(simplify_points(points)) do
+      auto:add_point_at(pt.line, pt.value)
     end
   end
+
   renoise.app():show_status("Converted pattern effect columns to automation curve and cleared effect columns.")
 end
 
