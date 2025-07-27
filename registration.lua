@@ -88,6 +88,22 @@ function M.register_menu_and_keybindings(handlers)
     name = "Pattern Editor:Tools:Remap Instruments",
     invoke = handlers.prompt_and_remap_instruments
   }
+  renoise.tool():add_keybinding {
+    name = "Pattern Editor:Tools:Increase Velocity",
+    invoke = handlers.increase_velocity
+  }
+  renoise.tool():add_keybinding {
+    name = "Pattern Editor:Tools:Decrease Velocity",
+    invoke = handlers.decrease_velocity
+  }
+  renoise.tool():add_keybinding {
+    name = "Pattern Editor:Tools:Increase Velocity (Sensitive)",
+    invoke = handlers.increase_velocity_sensitive
+  }
+  renoise.tool():add_keybinding {
+    name = "Pattern Editor:Tools:Decrease Velocity (Sensitive)",
+    invoke = handlers.decrease_velocity_sensitive
+  }
 end
 
 return M 

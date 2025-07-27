@@ -40,6 +40,22 @@
         <Path>Pattern Editor:Tools:Remap Instruments</Path>
         <Invoke>prompt_and_remap_instruments</Invoke>
       </Binding>
+      <Binding>
+        <Path>Pattern Editor:Tools:Increase Velocity</Path>
+        <Invoke>increase_velocity</Invoke>
+      </Binding>
+      <Binding>
+        <Path>Pattern Editor:Tools:Decrease Velocity</Path>
+        <Invoke>decrease_velocity</Invoke>
+      </Binding>
+      <Binding>
+        <Path>Pattern Editor:Tools:Increase Velocity (Sensitive)</Path>
+        <Invoke>increase_velocity_sensitive</Invoke>
+      </Binding>
+      <Binding>
+        <Path>Pattern Editor:Tools:Decrease Velocity (Sensitive)</Path>
+        <Invoke>decrease_velocity_sensitive</Invoke>
+      </Binding>
     </Bindings>
   </KeyBindings>
 </RenoiseScriptingTool>

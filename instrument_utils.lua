@@ -316,4 +316,64 @@ function M.remap_selected_notes_to_this()
   end
 end
 
+function M.increase_velocity()
+  local notes = utils.get_selected_notes()
+  for _, n in ipairs(notes) do
+    local v = n.note_column.volume_value
+    if v == 255 then v = 127 end
+    v = v + 10
+    if v >= 127 then
+      n.note_column.volume_value = 255
+    else
+      n.note_column.volume_value = math.max(0, v)
+    end
+  end
+  renoise.app():show_status("Increased velocity of selected notes by 10")
+end
+
+function M.decrease_velocity()
+  local notes = utils.get_selected_notes()
+  for _, n in ipairs(notes) do
+    local v = n.note_column.volume_value
+    if v == 255 then v = 127 end
+    v = v - 10
+    if v >= 127 then
+      n.note_column.volume_value = 255
+    else
+      n.note_column.volume_value = math.max(0, v)
+    end
+  end
+  renoise.app():show_status("Decreased velocity of selected notes by 10")
+end
+
+function M.increase_velocity_sensitive()
+  local notes = utils.get_selected_notes()
+  for _, n in ipairs(notes) do
+    local v = n.note_column.volume_value
+    if v == 255 then v = 127 end
+    v = v + 1
+    if v >= 127 then
+      n.note_column.volume_value = 255
+    else
+      n.note_column.volume_value = math.max(0, v)
+    end
+  end
+  renoise.app():show_status("Increased velocity of selected notes by 1")
+end
+
+function M.decrease_velocity_sensitive()
+  local notes = utils.get_selected_notes()
+  for _, n in ipairs(notes) do
+    local v = n.note_column.volume_value
+    if v == 255 then v = 127 end
+    v = v - 1
+    if v >= 127 then
+      n.note_column.volume_value = 255
+    else
+      n.note_column.volume_value = math.max(0, v)
+    end
+  end
+  renoise.app():show_status("Decreased velocity of selected notes by 1")
+end
+
 return M 

@@ -103,5 +103,9 @@ registration.register_menu_and_keybindings({
   find_duplicate_single_sample_instruments = find_duplicate_single_sample_instruments,
   prompt_and_merge_instruments = prompt_and_merge_instruments,
   prompt_and_remap_instruments = prompt_and_remap_instruments,
-  remap_selected_notes_to_this = remap_selected_notes_to_this
+  remap_selected_notes_to_this = remap_selected_notes_to_this,
+  increase_velocity = instrument_utils.increase_velocity,
+  decrease_velocity = instrument_utils.decrease_velocity,
+  increase_velocity_sensitive = instrument_utils.increase_velocity_sensitive,
+  decrease_velocity_sensitive = instrument_utils.decrease_velocity_sensitive
 })
