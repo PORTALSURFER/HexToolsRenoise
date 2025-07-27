@@ -17,13 +17,16 @@ function M.render_selection_to_new_track(destructive)
     original_mute_states[i] = song.tracks[i].mute_state
   end
 
+  -- Determine the source track from selection (not cursor position)
+  local source_track_idx = sel.start_track or song.selected_track_index
+
   -- Mute all tracks except the selected one
   for i = 1, #song.tracks do
     local track = song.tracks[i]
     -- Skip master track as it cannot be muted
     if track.type == renoise.Track.TRACK_TYPE_MASTER then
       -- Keep master track as is
-    elseif i == song.selected_track_index then
+    elseif i == source_track_idx then
       track.mute_state = renoise.Track.MUTE_STATE_ACTIVE
     else
       track.mute_state = renoise.Track.MUTE_STATE_MUTED
@@ -37,7 +40,11 @@ function M.render_selection_to_new_track(destructive)
   local options = {
     start_pos = start_pos,
     end_pos = end_pos,
-    priority = "high"
+    bit_depth = 16,
+    channels = 2,
+    priority = "high",
+    interpolation = "precise",
+    sample_rate = 48000
   }
 
   song:render(options, temp_file, function()
@@ -51,10 +58,14 @@ function M.render_selection_to_new_track(destructive)
     local instr = song:insert_instrument_at(new_instr_idx)
     instr:insert_sample_at(1)
     instr:sample(1).sample_buffer:load_from(temp_file)
+    
+    -- Apply 6dB boost by setting instrument volume to maximum (approximately 6dB boost)
+    instr.volume = 1.99526
+    
     os.remove(temp_file)
 
-    -- 2. Create a new track to the right of the current track
-    local new_track_idx = song.selected_track_index + 1
+    -- 2. Create a new track to the right of the source track
+    local new_track_idx = source_track_idx + 1
     song:insert_track_at(new_track_idx)
 
     -- 3. Add a C-4 note with full velocity at the top of the selection
@@ -71,7 +82,7 @@ function M.render_selection_to_new_track(destructive)
 
     -- 5. Optionally cut (clear) all note/effect data in the original selection
     if destructive then
-      local orig_track = pattern:track(song.selected_track_index - 1) -- Use original track index
+      local orig_track = pattern:track(source_track_idx) -- Use source track from selection
       for l = sel.start_line, sel.end_line do
         local orig_line = orig_track:line(l)
         for nc = 1, #orig_line.note_columns do
@@ -109,13 +120,16 @@ function M.render_selection_to_next_track(destructive)
     original_mute_states[i] = song.tracks[i].mute_state
   end
 
+  -- Determine the source track from selection (not cursor position)
+  local source_track_idx = sel.start_track or song.selected_track_index
+
   -- Mute all tracks except the selected one
   for i = 1, #song.tracks do
     local track = song.tracks[i]
     -- Skip master track as it cannot be muted
     if track.type == renoise.Track.TRACK_TYPE_MASTER then
       -- Keep master track as is
-    elseif i == song.selected_track_index then
+    elseif i == source_track_idx then
       track.mute_state = renoise.Track.MUTE_STATE_ACTIVE
     else
       track.mute_state = renoise.Track.MUTE_STATE_MUTED
@@ -129,10 +143,11 @@ function M.render_selection_to_next_track(destructive)
   local options = {
     start_pos = start_pos,
     end_pos = end_pos,
-    priority = "high"
+    priority = "high",
+    sample_rate = 48000
   }
 
-  local next_track_idx = song.selected_track_index + 1
+  local next_track_idx = source_track_idx + 1
   if next_track_idx > #song.tracks then
     -- Restore original mute states before returning
     for i = 1, #song.tracks do
@@ -153,6 +168,10 @@ function M.render_selection_to_next_track(destructive)
     local instr = song:insert_instrument_at(new_instr_idx)
     instr:insert_sample_at(1)
     instr:sample(1).sample_buffer:load_from(temp_file)
+    
+    -- Apply 6dB boost by setting instrument volume to 2.0 (6dB = 20*log10(2))
+    instr.volume = 2.0
+    
     os.remove(temp_file)
 
     -- 2. Use the next existing track (do not create a new one)
@@ -169,7 +188,7 @@ function M.render_selection_to_next_track(destructive)
 
     -- 4. Optionally cut (clear) all note/effect data in the original selection
     if destructive then
-      local orig_track = pattern:track(song.selected_track_index - 1) -- Use original track index
+      local orig_track = pattern:track(source_track_idx) -- Use source track from selection
       for l = sel.start_line, sel.end_line do
         local orig_line = orig_track:line(l)
         for nc = 1, #orig_line.note_columns do
