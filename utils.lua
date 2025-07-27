@@ -347,7 +347,18 @@ end
 
 -- Function to be called when track selection changes
 local function handle_track_focus_change()
+  -- First, handle auto-collapse of previously focused track
   check_and_auto_collapse_focused_track()
+  
+  -- Then, check if we clicked on a collapsed track
+  local song = renoise.song()
+  local current_track = song.selected_track_index
+  local track = song.tracks[current_track]
+  
+  -- If the newly selected track is collapsed, uncollapse it and set focus mode
+  if track and track.type == renoise.Track.TRACK_TYPE_SEQUENCER and track.collapsed then
+    uncollapse_and_select(current_track)
+  end
 end
 M.handle_track_focus_change = handle_track_focus_change
 
