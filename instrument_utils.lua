@@ -87,8 +87,6 @@ function M.prompt_and_merge_instruments()
       renoise.app():show_message("No instruments specified.")
       return
     end
-    -- Debug: log the raw input string
-    renoise.app():show_message("Raw input: " .. tostring(input))
     -- Parse comma-separated list, allow hex (e.g., 0A) or decimal
     local indices = {}
     for num in input:gmatch("[^,%s]+") do
@@ -203,7 +201,6 @@ function M.prompt_and_merge_instruments()
       text = "Merge",
       notifier = function()
         local input = input_field.value
-        renoise.app():show_message("Button pressed, input: " .. tostring(input))
         on_input(input)
       end
     }
@@ -249,23 +246,21 @@ local function remap_instruments(indices, new_instr_val, destructive)
       song:delete_instrument_at(del_idx)
     end
     song.selected_instrument_index = insert_at
-    renoise.app():show_message("Remapped and deleted merged instruments. New instrument index: " .. string.format("%02X", insert_at - 1))
-  else
-    renoise.app():show_message("Remapped instruments to index: " .. string.format("%02X", new_instr_val))
   end
 end
 
 -- Prompt user for instrument numbers to remap, then (stub) remap and delete or just remap
 function M.prompt_and_remap_instruments()
   local song = renoise.song()
-  local function on_input(input)
+  local vb = renoise.ViewBuilder()
+  local input_field = vb:textfield { id = "input", value = "" }
+  local dialog
+  local function on_remap_button(destructive)
+    local input = input_field.value
     if not input or input == "" then
       renoise.app():show_message("No instruments specified.")
       return
     end
-    -- Debug: log the raw input string
-    renoise.app():show_message("Raw input: " .. tostring(input))
-    -- Parse comma-separated list, allow hex (e.g., 0A) or decimal
     local indices = {}
     for num in input:gmatch("[^,%s]+") do
       local idx = tonumber(num, 16) or tonumber(num)
@@ -277,59 +272,29 @@ function M.prompt_and_remap_instruments()
       renoise.app():show_message("No valid indices parsed from input: " .. tostring(input))
       return
     end
-    -- After parsing indices and confirming, prompt for mode
-    local hex_indices = {}
-    for _, idx in ipairs(indices) do table.insert(hex_indices, string.format("%02X", idx - 1)) end
-    local confirm_msg = "Remap the following instruments?\n" .. table.concat(hex_indices, ", ")
-    local vb = renoise.ViewBuilder()
-    local dialog
-    local function do_remap(destructive)
-      -- Always remap to the lowest index
-      local new_instr_val = math.min(table.unpack(indices)) - 1
-      remap_instruments(indices, new_instr_val, destructive)
-    end
-    local dialog_content = vb:column {
-      vb:text { text = confirm_msg },
-      vb:row {
-        vb:button {
-          text = "Remap Only",
-          notifier = function()
-            if dialog then dialog:close() end
-            do_remap(false)
-          end
-        },
-        vb:button {
-          text = "Remap and Delete",
-          notifier = function()
-            if dialog then dialog:close() end
-            do_remap(true)
-          end
-        },
-        vb:button {
-          text = "Cancel",
-          notifier = function()
-            if dialog then dialog:close() end
-          end
-        }
-      }
-    }
-    dialog = renoise.app():show_custom_dialog("Remap Instruments", dialog_content)
+    local new_instr_val = math.min(table.unpack(indices)) - 1
+    remap_instruments(indices, new_instr_val, destructive)
+    if dialog then dialog:close() end
   end
-  local vb = renoise.ViewBuilder()
-  local input_field = vb:textfield { id = "input", value = "" }
   local dialog_content = vb:column {
     vb:text { text = "Enter instrument numbers to remap (comma-separated, 0-based, HEX or decimal):" },
     input_field,
-    vb:button {
-      text = "Remap",
-      notifier = function()
-        local input = input_field.value
-        renoise.app():show_message("Button pressed, input: " .. tostring(input))
-        on_input(input)
-      end
+    vb:row {
+      vb:button {
+        text = "Remap Only",
+        notifier = function() on_remap_button(false) end
+      },
+      vb:button {
+        text = "Remap and Delete",
+        notifier = function() on_remap_button(true) end
+      },
+      vb:button {
+        text = "Cancel",
+        notifier = function() if dialog then dialog:close() end end
+      }
     }
   }
-  renoise.app():show_custom_dialog("Remap Instruments", dialog_content)
+  dialog = renoise.app():show_custom_dialog("Remap Instruments", dialog_content)
 end
 
 return M 
