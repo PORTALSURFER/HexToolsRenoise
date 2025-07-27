@@ -626,6 +626,11 @@ function M.convert_pattern_to_automation()
         table.insert(points, { line = line_idx, value = value })
         last_val = value
       end
+
+      -- Nullify the pattern volume field for this line (set to empty)
+      for nc = 1, #line.note_columns do
+        line:note_column(nc).volume_value = 255 -- 255 represents "no volume" in Renoise API
+      end
     end
     for _, pt in ipairs(simplify_points(points, 0.02)) do
       auto:add_point_at(pt.line, pt.value)
