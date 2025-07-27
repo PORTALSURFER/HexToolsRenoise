@@ -77,8 +77,10 @@ M.export_keybindings_md = export_keybindings_md
 local last_collapsed_pattern_idx = nil
 local reorder_collapsed_tracks = false -- Reordering disabled (too slow); set to true to enable
 
--- Light tint color (RGB 0-255). Adjust to taste.
-local tint_color = { 200, 200, 200 }
+
+-- Track colors (RGB 0-255)
+local active_track_color = { 255, 100, 0 }  -- Orange for active/used tracks
+local collapsed_track_color = { 100, 100, 100 }  -- Dark grey for collapsed tracks
 
 -- Cache to restore original track colors when tint is removed
 local previous_colors = {}
@@ -123,22 +125,22 @@ local function collapse_unused_tracks_in_pattern()
         end
       end
     end
-    -- Apply tinting to non-collapsed (expanded) tracks and restore colors for collapsed
+    -- Apply colors to tracks based on their state
     for t = 1, #song.tracks do
       local track = song.tracks[t]
       if track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
         if track.collapsed then
-          -- Restore original color if it was tinted
-          if previous_colors[t] then
-            track.color = previous_colors[t]
-            previous_colors[t] = nil
-          end
-        else
-          -- Apply tint if not already stored
+          -- Store original color if not already stored, then apply dark grey
           if not previous_colors[t] then
             previous_colors[t] = { track.color[1], track.color[2], track.color[3] }
-            track.color = tint_color
           end
+          track.color = collapsed_track_color
+        else
+          -- Store original color if not already stored, then apply orange
+          if not previous_colors[t] then
+            previous_colors[t] = { track.color[1], track.color[2], track.color[3] }
+          end
+          track.color = active_track_color
         end
       end
     end
@@ -190,11 +192,25 @@ local function collapse_unused_tracks_in_pattern()
         end
       end
     end
-    -- Remove any tint and restore colors when all tracks expanded
+    -- Apply colors to tracks based on their state when expanding
     for t = 1, #song.tracks do
-      if previous_colors[t] then
-        song.tracks[t].color = previous_colors[t]
-        previous_colors[t] = nil
+      local track = song.tracks[t]
+      if track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
+        local pattern_track = pattern:track(t)
+        local has_notes = not pattern_track.is_empty
+        if has_notes then
+          -- Store original color if not already stored, then apply orange
+          if not previous_colors[t] then
+            previous_colors[t] = { track.color[1], track.color[2], track.color[3] }
+          end
+          track.color = active_track_color
+        else
+          -- Store original color if not already stored, then apply dark grey
+          if not previous_colors[t] then
+            previous_colors[t] = { track.color[1], track.color[2], track.color[3] }
+          end
+          track.color = collapsed_track_color
+        end
       end
     end
     renoise.app():show_status("Expanded all tracks.")
@@ -233,20 +249,22 @@ local function collapse_unused_tracks_in_pattern()
         end
       end
     end
-    -- Apply tinting similar to first collapse path
+    -- Apply colors to tracks based on their state
     for t = 1, #song.tracks do
       local track = song.tracks[t]
       if track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
         if track.collapsed then
-          if previous_colors[t] then
-            track.color = previous_colors[t]
-            previous_colors[t] = nil
-          end
-        else
+          -- Store original color if not already stored, then apply dark grey
           if not previous_colors[t] then
             previous_colors[t] = { track.color[1], track.color[2], track.color[3] }
-            track.color = tint_color
           end
+          track.color = collapsed_track_color
+        else
+          -- Store original color if not already stored, then apply orange
+          if not previous_colors[t] then
+            previous_colors[t] = { track.color[1], track.color[2], track.color[3] }
+          end
+          track.color = active_track_color
         end
       end
     end
