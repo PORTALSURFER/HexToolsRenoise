@@ -3,6 +3,53 @@ local M = {}
 local play_return_state = nil
 local pending_return_state = nil
 
+-- New unified buffer for play position
+local play_buffer = nil
+
+-- Store current cursor position into play_buffer
+function M.set_playhead_buffer()
+  local song = renoise.song()
+  play_buffer = {
+    sequence = song.selected_sequence_index,
+    track = song.selected_track_index,
+    line = song.selected_line_index
+  }
+  renoise.app():show_status(("Buffered play position: seq=%d, track=%d, line=%d")
+    :format(play_buffer.sequence, play_buffer.track, play_buffer.line))
+end
+
+-- Jump to buffered position and start playing (always continue pattern)
+function M.play_from_buffer()
+  if not play_buffer then
+    renoise.app():show_status("No play buffer set. Use the buffer hot-key first.")
+    return
+  end
+
+  local song = renoise.song()
+
+  -- Clamp indices in case the song structure changed
+  local seq_idx = math.min(play_buffer.sequence, #song.sequencer.pattern_sequence)
+  song.selected_sequence_index = seq_idx
+
+  local track_idx = math.min(play_buffer.track, #song.tracks)
+  song.selected_track_index = track_idx
+
+  local patt_idx = song.sequencer:pattern(seq_idx)
+  local patt = song:pattern(patt_idx)
+  local line_idx = math.min(play_buffer.line, patt.number_of_lines)
+  song.selected_line_index = line_idx
+
+  renoise.app():show_status(("Playing from buffered position: seq=%d, track=%d, line=%d")
+    :format(song.selected_sequence_index, song.selected_track_index, song.selected_line_index))
+
+  if song.transport.playing then
+    -- Restart playback at the buffered line within the current pattern
+    song.transport:start_at(line_idx)
+  else
+    song.transport:start(renoise.Transport.PLAYMODE_CONTINUE_PATTERN)
+  end
+end
+
 local function on_transport_stopped()
   if not pending_return_state then return end
   local song = renoise.song()

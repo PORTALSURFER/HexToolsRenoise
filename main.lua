@@ -68,6 +68,14 @@ local function play_and_return_toggle()
   navigation_utils.play_and_return_toggle()
 end
 
+local function set_playhead_buffer()
+  navigation_utils.set_playhead_buffer()
+end
+
+local function play_from_buffer()
+  navigation_utils.play_from_buffer()
+end
+
 local function jump_to_test_position()
   navigation_utils.jump_to_test_position()
 end
@@ -110,7 +118,8 @@ registration.register_menu_and_keybindings({
   render_selection_to_new_track_destructive = render_selection_to_new_track_destructive,
   render_selection_to_next_track = render_selection_to_next_track,
   render_selection_to_next_track_destructive = render_selection_to_next_track_destructive,
-  play_and_return_toggle = play_and_return_toggle,
+  set_playhead_buffer = set_playhead_buffer,
+  play_from_buffer = play_from_buffer,
   jump_to_test_position = jump_to_test_position,
   find_duplicate_single_sample_instruments = find_duplicate_single_sample_instruments,
   prompt_and_merge_instruments = prompt_and_merge_instruments,

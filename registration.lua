@@ -17,8 +17,12 @@ function M.register_menu_and_keybindings(handlers)
   }
 
   renoise.tool():add_menu_entry{
-    name = "Main Menu:Tools:HexTools:Play And Return Toggle",
-    invoke = handlers.play_and_return_toggle
+    name = "Main Menu:Tools:HexTools:Set Playhead Buffer",
+    invoke = handlers.set_playhead_buffer
+  }
+  renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Play From Buffer",
+    invoke = handlers.play_from_buffer
   }
 
   renoise.tool():add_menu_entry{
@@ -57,8 +61,12 @@ function M.register_menu_and_keybindings(handlers)
   }
 
   renoise.tool():add_keybinding {
-    name = "Pattern Editor:Tools:Play And Return Toggle",
-    invoke = handlers.play_and_return_toggle
+    name = "Pattern Editor:Tools:Set Playhead Buffer",
+    invoke = handlers.set_playhead_buffer
+  }
+  renoise.tool():add_keybinding {
+    name = "Pattern Editor:Tools:Play From Buffer",
+    invoke = handlers.play_from_buffer
   }
   renoise.tool():add_keybinding {
     name = "Pattern Editor:Tools:Render Selection To New Track",
