@@ -39,4 +39,88 @@ function M.get_selected_notes()
   return notes
 end
 
+local function export_keybindings_md()
+  local manifest_path = 'manifest.xml'
+  local md_path = 'keybindings.md'
+  local xml = io.open(manifest_path, 'r')
+  if not xml then
+    renoise.app():show_error('Could not open manifest.xml')
+    return
+  end
+  local content = xml:read('*a')
+  xml:close()
+
+  local bindings = {}
+  for path, invoke in content:gmatch('<Binding>%s*<Path>(.-)</Path>%s*<Invoke>(.-)</Invoke>%s*</Binding>') do
+    table.insert(bindings, {path = path, invoke = invoke})
+  end
+
+  local md = {'# HexTools Keybindings\n'}
+  table.insert(md, '| Path | Invoke |')
+  table.insert(md, '|------|--------|')
+  for _, b in ipairs(bindings) do
+    table.insert(md, string.format('| %s | `%s` |', b.path, b.invoke))
+  end
+
+  local f = io.open(md_path, 'w')
+  if not f then
+    renoise.app():show_error('Could not write keybindings.md')
+    return
+  end
+  f:write(table.concat(md, '\n'))
+  f:close()
+  renoise.app():show_status('Exported keybindings to keybindings.md')
+end
+
+M.export_keybindings_md = export_keybindings_md
+
+local function collapse_unused_tracks_in_pattern()
+  local song = renoise.song()
+  local patt_idx = song.selected_pattern_index
+  local pattern = song:pattern(patt_idx)
+  -- Check if any sequencer track is currently collapsed
+  local any_collapsed = false
+  for t = 1, #song.tracks do
+    local track = song.tracks[t]
+    if track.type == renoise.Track.TRACK_TYPE_SEQUENCER and track.collapsed then
+      any_collapsed = true
+      break
+    end
+  end
+  if any_collapsed then
+    -- Expand all sequencer tracks
+    for t = 1, #song.tracks do
+      local track = song.tracks[t]
+      if track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
+        track.collapsed = false
+      end
+    end
+    renoise.app():show_status("Expanded all tracks.")
+  else
+    -- Collapse unused tracks as before
+    for t = 1, #song.tracks do
+      local track = song.tracks[t]
+      if track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
+        local pattern_track = pattern:track(t)
+        local has_notes = false
+        for l = 1, pattern.number_of_lines do
+          local line = pattern_track:line(l)
+          for nc = 1, #line.note_columns do
+            local col = line:note_column(nc)
+            if col.note_value ~= 121 and col.instrument_value ~= 255 then
+              has_notes = true
+              break
+            end
+          end
+          if has_notes then break end
+        end
+        track.collapsed = not has_notes
+      end
+    end
+    renoise.app():show_status("Collapsed unused tracks in current pattern.")
+  end
+end
+
+M.collapse_unused_tracks_in_pattern = collapse_unused_tracks_in_pattern
+
 return M 

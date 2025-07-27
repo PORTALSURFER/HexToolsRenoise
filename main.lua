@@ -9,6 +9,7 @@ end
 local render_utils = require("render_utils")
 local navigation_utils = require("navigation_utils")
 local instrument_utils = require("instrument_utils")
+local utils = require("utils")
 
 -- Buffer for play/return state
 local play_return_state = nil
@@ -108,6 +109,14 @@ local function convert_pattern_to_automation()
   instrument_utils.convert_pattern_to_automation()
 end
 
+local function export_keybindings_md()
+  utils.export_keybindings_md()
+end
+
+local function collapse_unused_tracks_in_pattern()
+  utils.collapse_unused_tracks_in_pattern()
+end
+
 local pending_return_state = nil
 
 local registration = require("registration")
@@ -131,5 +140,7 @@ registration.register_menu_and_keybindings({
   decrease_velocity_sensitive = instrument_utils.decrease_velocity_sensitive,
   focus_automation_editor_for_selection = focus_automation_editor_for_selection,
   convert_automation_to_pattern = convert_automation_to_pattern,
-  convert_pattern_to_automation = convert_pattern_to_automation
+  convert_pattern_to_automation = convert_pattern_to_automation,
+  export_keybindings_md = export_keybindings_md,
+  collapse_unused_tracks_in_pattern = collapse_unused_tracks_in_pattern
 })

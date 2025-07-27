@@ -56,6 +56,16 @@ function M.register_menu_and_keybindings(handlers)
   }
 
   renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Export Keybindings (Markdown)",
+    invoke = handlers.export_keybindings_md
+  }
+
+  renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Collapse Unused Tracks in Pattern",
+    invoke = handlers.collapse_unused_tracks_in_pattern
+  }
+
+  renoise.tool():add_menu_entry{
     name = "Instrument Box:Remap Selected Notes to This",
     invoke = handlers.remap_selected_notes_to_this
   }
@@ -123,6 +133,10 @@ function M.register_menu_and_keybindings(handlers)
   renoise.tool():add_keybinding {
     name = "Pattern Editor:Tools:Convert Pattern To Automation",
     invoke = handlers.convert_pattern_to_automation
+  }
+  renoise.tool():add_keybinding {
+    name = "Pattern Editor:Tools:Collapse Unused Tracks in Pattern",
+    invoke = handlers.collapse_unused_tracks_in_pattern
   }
   renoise.tool():add_menu_entry{
     name = "Pattern Editor:Focus Automation Editor for Selection",

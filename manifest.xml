@@ -68,6 +68,10 @@
         <Path>Pattern Editor:Tools:Convert Pattern To Automation</Path>
         <Invoke>convert_pattern_to_automation</Invoke>
       </Binding>
+      <Binding>
+        <Path>Pattern Editor:Tools:Collapse Unused Tracks in Pattern</Path>
+        <Invoke>collapse_unused_tracks_in_pattern</Invoke>
+      </Binding>
     </Bindings>
   </KeyBindings>
 </RenoiseScriptingTool>
