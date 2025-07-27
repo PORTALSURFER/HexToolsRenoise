@@ -41,6 +41,16 @@ function M.register_menu_and_keybindings(handlers)
     invoke = handlers.find_duplicate_single_sample_instruments
   }
 
+  renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Merge Instruments",
+    invoke = handlers.prompt_and_merge_instruments
+  }
+
+  renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Remap Instruments",
+    invoke = handlers.prompt_and_remap_instruments
+  }
+
   renoise.tool():add_keybinding {
     name = "Pattern Editor:Tools:Play And Return Toggle",
     invoke = handlers.play_and_return_toggle
@@ -64,6 +74,14 @@ function M.register_menu_and_keybindings(handlers)
   renoise.tool():add_keybinding {
     name = "Pattern Editor:Tools:Find Duplicate Single-Sample Instruments",
     invoke = handlers.find_duplicate_single_sample_instruments
+  }
+  renoise.tool():add_keybinding {
+    name = "Pattern Editor:Tools:Merge Instruments",
+    invoke = handlers.prompt_and_merge_instruments
+  }
+  renoise.tool():add_keybinding {
+    name = "Pattern Editor:Tools:Remap Instruments",
+    invoke = handlers.prompt_and_remap_instruments
   }
 end
 

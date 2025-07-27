@@ -76,6 +76,14 @@ local function find_duplicate_single_sample_instruments()
   instrument_utils.find_duplicate_single_sample_instruments()
 end
 
+local function prompt_and_merge_instruments()
+  instrument_utils.prompt_and_merge_instruments()
+end
+
+local function prompt_and_remap_instruments()
+  instrument_utils.prompt_and_remap_instruments()
+end
+
 local pending_return_state = nil
 
 local registration = require("registration")
@@ -88,5 +96,7 @@ registration.register_menu_and_keybindings({
   render_selection_to_next_track_destructive = render_selection_to_next_track_destructive,
   play_and_return_toggle = play_and_return_toggle,
   jump_to_test_position = jump_to_test_position,
-  find_duplicate_single_sample_instruments = find_duplicate_single_sample_instruments
+  find_duplicate_single_sample_instruments = find_duplicate_single_sample_instruments,
+  prompt_and_merge_instruments = prompt_and_merge_instruments,
+  prompt_and_remap_instruments = prompt_and_remap_instruments
 })

@@ -32,6 +32,14 @@
         <Path>Pattern Editor:Tools:Find Duplicate Single-Sample Instruments</Path>
         <Invoke>find_duplicate_single_sample_instruments</Invoke>
       </Binding>
+      <Binding>
+        <Path>Pattern Editor:Tools:Merge Instruments</Path>
+        <Invoke>prompt_and_merge_instruments</Invoke>
+      </Binding>
+      <Binding>
+        <Path>Pattern Editor:Tools:Remap Instruments</Path>
+        <Invoke>prompt_and_remap_instruments</Invoke>
+      </Binding>
     </Bindings>
   </KeyBindings>
 </RenoiseScriptingTool>
