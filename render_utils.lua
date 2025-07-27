@@ -11,6 +11,25 @@ function M.render_selection_to_new_track(destructive)
     return
   end
 
+  -- Store original mute states
+  local original_mute_states = {}
+  for i = 1, #song.tracks do
+    original_mute_states[i] = song.tracks[i].mute_state
+  end
+
+  -- Mute all tracks except the selected one
+  for i = 1, #song.tracks do
+    local track = song.tracks[i]
+    -- Skip master track as it cannot be muted
+    if track.type == renoise.Track.TRACK_TYPE_MASTER then
+      -- Keep master track as is
+    elseif i == song.selected_track_index then
+      track.mute_state = renoise.Track.MUTE_STATE_ACTIVE
+    else
+      track.mute_state = renoise.Track.MUTE_STATE_MUTED
+    end
+  end
+
   local start_pos = renoise.SongPos(song.selected_sequence_index, sel.start_line)
   local end_pos = renoise.SongPos(song.selected_sequence_index, sel.end_line)
   local temp_file = os.tmpname() .. ".wav"
@@ -22,6 +41,11 @@ function M.render_selection_to_new_track(destructive)
   }
 
   song:render(options, temp_file, function()
+    -- Restore original mute states
+    for i = 1, #song.tracks do
+      song.tracks[i].mute_state = original_mute_states[i]
+    end
+
     -- 1. Create new instrument and load sample
     local new_instr_idx = song.selected_instrument_index + 1
     local instr = song:insert_instrument_at(new_instr_idx)
@@ -70,6 +94,25 @@ function M.render_selection_to_next_track(destructive)
     return
   end
 
+  -- Store original mute states
+  local original_mute_states = {}
+  for i = 1, #song.tracks do
+    original_mute_states[i] = song.tracks[i].mute_state
+  end
+
+  -- Mute all tracks except the selected one
+  for i = 1, #song.tracks do
+    local track = song.tracks[i]
+    -- Skip master track as it cannot be muted
+    if track.type == renoise.Track.TRACK_TYPE_MASTER then
+      -- Keep master track as is
+    elseif i == song.selected_track_index then
+      track.mute_state = renoise.Track.MUTE_STATE_ACTIVE
+    else
+      track.mute_state = renoise.Track.MUTE_STATE_MUTED
+    end
+  end
+
   local start_pos = renoise.SongPos(song.selected_sequence_index, sel.start_line)
   local end_pos = renoise.SongPos(song.selected_sequence_index, sel.end_line)
   local temp_file = os.tmpname() .. ".wav"
@@ -82,11 +125,20 @@ function M.render_selection_to_next_track(destructive)
 
   local next_track_idx = song.selected_track_index + 1
   if next_track_idx > #song.tracks then
+    -- Restore original mute states before returning
+    for i = 1, #song.tracks do
+      song.tracks[i].mute_state = original_mute_states[i]
+    end
     renoise.app():show_status("No next track available to render into")
     return
   end
 
   song:render(options, temp_file, function()
+    -- Restore original mute states
+    for i = 1, #song.tracks do
+      song.tracks[i].mute_state = original_mute_states[i]
+    end
+
     -- 1. Create new instrument and load sample
     local new_instr_idx = song.selected_instrument_index + 1
     local instr = song:insert_instrument_at(new_instr_idx)
