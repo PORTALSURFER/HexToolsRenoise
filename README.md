@@ -54,3 +54,7 @@ All features below can be mapped to custom keys in Renoise via the Preferences >
 2. In Renoise, open the `Tools` menu and choose `HexTools > ...`.
 
 For more details about developing Renoise tools, see the [official API documentation](https://renoise.github.io/xrnx/API/index.htm).
+
+## Mentions
+
+- [esaruoho/paketti](https://github.com/esaruoho/paketti): A great collection of Renoise tools and a source of inspiration for this project.
