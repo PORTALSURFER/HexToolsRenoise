@@ -392,6 +392,13 @@ function M.focus_automation_editor_for_selection()
   renoise.app():show_status("Focused automation editor for selection.")
 end
 
+-- Helper to check if two DeviceParameter objects refer to the same parameter
+local function is_same_parameter(param1, param2)
+  if not param1 or not param2 then return false end
+  -- Compare parent device and index
+  return (param1.device == param2.device) and (param1.index == param2.index)
+end
+
 function M.convert_automation_to_pattern()
   local song = renoise.song()
   local track_idx = song.selected_track_index
@@ -406,26 +413,53 @@ function M.convert_automation_to_pattern()
   -- Find the first automation in this pattern/track
   local automation = nil
   local device_idx, param_idx = nil, nil
+  local param = nil
   for d = 1, #song.tracks[track_idx].devices do
     local device = song.tracks[track_idx].devices[d]
     for p = 1, #device.parameters do
-      local param = device:parameter(p)
-      local auto = track:find_automation(param)
+      local test_param = device:parameter(p)
+      local auto = track:find_automation(test_param)
       if auto and #auto.points > 0 then
         automation = auto
         device_idx = d
         param_idx = p
+        param = test_param
         break
       end
     end
     if automation then break end
   end
   if not automation then
-    renoise.app():show_status("No automation found in selected track/pattern.")
+    renoise.app():show_status("No automation found in this pattern/track.")
     return
   end
   local points = automation.points
-  -- Interpolate automation for every line in the selection
+  if #points == 0 then
+    renoise.app():show_status("No automation points found.")
+    return
+  end
+  -- Determine if this is track volume automation
+  local is_track_volume = false
+  -- Find the device and parameter index for prefx_volume by name
+  local prefx_device_idx, prefx_param_idx = nil, nil
+  local prefx_param_name = song.tracks[track_idx].prefx_volume.name
+  for d = 1, #song.tracks[track_idx].devices do
+    local device = song.tracks[track_idx].devices[d]
+    for p = 1, #device.parameters do
+      if device:parameter(p).name == prefx_param_name then
+        prefx_device_idx = d
+        prefx_param_idx = p
+        break
+      end
+    end
+    if prefx_device_idx then break end
+  end
+  if device_idx and param_idx and prefx_device_idx and prefx_param_idx then
+    if device_idx == prefx_device_idx and param_idx == prefx_param_idx then
+      is_track_volume = true
+    end
+  end
+  -- Interpolate and write values for each line in the selection
   for line_idx = sel.start_line, sel.end_line do
     local value = 0
     if #points == 1 then
@@ -438,16 +472,34 @@ function M.convert_automation_to_pattern()
       for i = 1, #points - 1 do
         local pt1 = points[i]
         local pt2 = points[i + 1]
-        if line_idx >= pt1.time and line_idx <= pt2.time then
+        if line_idx == pt1.time then
+          value = pt1.value
+          break
+        elseif line_idx > pt1.time and line_idx < pt2.time then
           local t = (line_idx - pt1.time) / (pt2.time - pt1.time)
           value = pt1.value + (pt2.value - pt1.value) * t
+          break
+        elseif line_idx == pt2.time then
+          value = pt2.value
           break
         end
       end
     end
-    if value > 0 then
-      local line = track:line(line_idx)
-      -- Find a free effect column
+    local line = track:line(line_idx)
+    if is_track_volume then
+      -- Set volume for all note columns, but do not insert dummy notes
+      for nc = 1, #line.note_columns do
+        local col = line.note_columns[nc]
+        -- Scale automation value (0.0-1.0) to 0-127, 255 for empty
+        local v = math.floor(value * 127 + 0.5)
+        if v > 0 and v < 127 then
+          col.volume_value = v
+        else
+          col.volume_value = 255 -- skip 00 and FF
+        end
+      end
+    else
+      -- Write to a free effect column
       local fx_col = nil
       for ec = 1, #line.effect_columns do
         if line:effect_column(ec).is_empty then
@@ -456,9 +508,10 @@ function M.convert_automation_to_pattern()
         end
       end
       if fx_col then
-        local scaled = math.floor(value * 255 + 0.5)
-        fx_col.number_value = (device_idx - 1) * 16 + (param_idx - 1)
-        fx_col.amount_value = scaled
+        -- Encode device/parameter and value (0-255)
+        local value_255 = math.floor(value * 255 + 0.5)
+        fx_col.number_string = string.format("%02X%02X", device_idx - 1, param_idx - 1)
+        fx_col.amount_value = value_255
       end
     end
   end
@@ -466,7 +519,97 @@ function M.convert_automation_to_pattern()
   if automation then
     track:delete_automation(automation.dest_parameter)
   end
-  renoise.app():show_status("Interpolated automation to pattern effect columns and removed automation curve.")
+  renoise.app():show_status("Interpolated automation to pattern and removed automation curve.")
+end
+
+function M.convert_pattern_to_automation()
+  local song = renoise.song()
+  local track_idx = song.selected_track_index
+  local patt_idx = song.selected_pattern_index
+  local pattern = song:pattern(patt_idx)
+  local track = pattern:track(track_idx)
+  local sel = song.selection_in_pattern
+  if not sel then
+    renoise.app():show_status("No selection in pattern editor.")
+    return
+  end
+  -- Find the first effect column with a device/parameter mapping in the selection
+  local device_idx, param_idx = nil, nil
+  for line_idx = sel.start_line, sel.end_line do
+    local line = track:line(line_idx)
+    for ec = 1, #line.effect_columns do
+      local fx_col = line:effect_column(ec)
+      if not fx_col.is_empty then
+        local num = fx_col.number_value
+        device_idx = math.floor(num / 16) + 1
+        param_idx = (num % 16) + 1
+        break
+      end
+    end
+    if device_idx then break end
+  end
+  if not device_idx or not param_idx then
+    renoise.app():show_status("No effect column parameter found in selection.")
+    return
+  end
+  local device = song.tracks[track_idx].devices[device_idx]
+  local param = device:parameter(param_idx)
+  -- Determine if this is track volume automation
+  local is_track_volume = false
+  local prefx_param_name = song.tracks[track_idx].prefx_volume.name
+  if param.name == prefx_param_name then
+    is_track_volume = true
+  end
+  -- Create or clear automation for this parameter
+  local auto = track:find_automation(param)
+  if not auto then
+    auto = track:create_automation(param)
+  else
+    auto:clear()
+  end
+  if is_track_volume then
+    -- For each line, if any note column has a set volume_value, use the highest value for automation
+    for line_idx = sel.start_line, sel.end_line do
+      local line = track:line(line_idx)
+      local max_vol = nil
+      for nc = 1, #line.note_columns do
+        local col = line.note_columns[nc]
+        if col.volume_value ~= 255 then
+          if not max_vol or col.volume_value > max_vol then
+            max_vol = col.volume_value
+          end
+        end
+      end
+      if max_vol then
+        local value = max_vol / 127
+        auto:add_point_at(line_idx, value)
+      end
+    end
+  else
+    -- For each line, if effect column matches, add automation point
+    for line_idx = sel.start_line, sel.end_line do
+      local line = track:line(line_idx)
+      local value = nil
+      for ec = 1, #line.effect_columns do
+        local fx_col = line:effect_column(ec)
+        if not fx_col.is_empty then
+          local num = fx_col.number_value
+          local d_idx = math.floor(num / 16) + 1
+          local p_idx = (num % 16) + 1
+          if d_idx == device_idx and p_idx == param_idx then
+            value = fx_col.amount_value / 255
+            -- Remove the effect column value after conversion
+            fx_col:clear()
+            break
+          end
+        end
+      end
+      if value then
+        auto:add_point_at(line_idx, value)
+      end
+    end
+  end
+  renoise.app():show_status("Converted pattern effect columns to automation curve and cleared effect columns.")
 end
 
 return M 

@@ -64,6 +64,10 @@
         <Path>Pattern Editor:Tools:Convert Automation To Pattern</Path>
         <Invoke>convert_automation_to_pattern</Invoke>
       </Binding>
+      <Binding>
+        <Path>Pattern Editor:Tools:Convert Pattern To Automation</Path>
+        <Invoke>convert_pattern_to_automation</Invoke>
+      </Binding>
     </Bindings>
   </KeyBindings>
 </RenoiseScriptingTool>

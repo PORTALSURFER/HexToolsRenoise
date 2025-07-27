@@ -112,6 +112,10 @@ function M.register_menu_and_keybindings(handlers)
     name = "Pattern Editor:Tools:Convert Automation To Pattern",
     invoke = handlers.convert_automation_to_pattern
   }
+  renoise.tool():add_keybinding {
+    name = "Pattern Editor:Tools:Convert Pattern To Automation",
+    invoke = handlers.convert_pattern_to_automation
+  }
   renoise.tool():add_menu_entry{
     name = "Pattern Editor:Focus Automation Editor for Selection",
     invoke = handlers.focus_automation_editor_for_selection
@@ -119,6 +123,10 @@ function M.register_menu_and_keybindings(handlers)
   renoise.tool():add_menu_entry{
     name = "Pattern Editor:Convert Automation To Pattern",
     invoke = handlers.convert_automation_to_pattern
+  }
+  renoise.tool():add_menu_entry{
+    name = "Pattern Editor:Convert Pattern To Automation",
+    invoke = handlers.convert_pattern_to_automation
   }
 end
 
