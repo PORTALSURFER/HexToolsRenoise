@@ -8,6 +8,7 @@ end
 
 local render_utils = require("render_utils")
 local navigation_utils = require("navigation_utils")
+local instrument_utils = require("instrument_utils")
 
 -- Buffer for play/return state
 local play_return_state = nil
@@ -71,6 +72,10 @@ local function jump_to_test_position()
   navigation_utils.jump_to_test_position()
 end
 
+local function find_duplicate_single_sample_instruments()
+  instrument_utils.find_duplicate_single_sample_instruments()
+end
+
 local pending_return_state = nil
 
 local registration = require("registration")
@@ -82,5 +87,6 @@ registration.register_menu_and_keybindings({
   render_selection_to_next_track = render_selection_to_next_track,
   render_selection_to_next_track_destructive = render_selection_to_next_track_destructive,
   play_and_return_toggle = play_and_return_toggle,
-  jump_to_test_position = jump_to_test_position
+  jump_to_test_position = jump_to_test_position,
+  find_duplicate_single_sample_instruments = find_duplicate_single_sample_instruments
 })
