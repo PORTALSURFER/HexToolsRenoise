@@ -25,6 +25,8 @@ HexTools adds the following utilities and workflow enhancements to Renoise:
   - Convert automation envelopes to pattern data (and remove the envelope).
   - Convert pattern effect columns to automation envelopes (and clear the effect columns).
 - **Menu Integration**: All features are accessible from the Renoise Tools menu or Pattern Editor context menus.
+- **Track Visibility Toggle**:
+  - Collapse all unused tracks in the current pattern, or expand all tracks if any are collapsed. Accessible from the Tools menu, Pattern Editor toolbar, and key bindings.
 
 ## Keymaps
 
@@ -47,6 +49,7 @@ All features below can be mapped to custom keys in Renoise via the Preferences >
 - `Pattern Editor:Tools:Focus Automation Editor for Selection`
 - `Pattern Editor:Tools:Convert Automation To Pattern`
 - `Pattern Editor:Tools:Convert Pattern To Automation`
+- `Pattern Editor:Tools:Collapse Unused Tracks in Pattern` *(toggles collapse/expand)*
 
 ## Installation
 
