@@ -65,9 +65,13 @@ function M.render_selection_to_new_track(destructive)
     line:note_column(1).instrument_value = new_instr_idx - 1 -- 0-based
     line:note_column(1).volume_value = 0xFF -- full velocity (255 in hex)
 
-    -- 4. Optionally cut (clear) all note/effect data in the original selection
+    -- 4. Ensure the new track is unmuted and focus it
+    song.tracks[new_track_idx].mute_state = renoise.Track.MUTE_STATE_ACTIVE
+    song.selected_track_index = new_track_idx
+
+    -- 5. Optionally cut (clear) all note/effect data in the original selection
     if destructive then
-      local orig_track = pattern:track(song.selected_track_index)
+      local orig_track = pattern:track(song.selected_track_index - 1) -- Use original track index
       for l = sel.start_line, sel.end_line do
         local orig_line = orig_track:line(l)
         for nc = 1, #orig_line.note_columns do
@@ -77,7 +81,12 @@ function M.render_selection_to_new_track(destructive)
           orig_line:effect_column(ec):clear()
         end
       end
-      renoise.app():show_status("Rendered selection, added new note, and cut original selection")
+      -- Add an 'off' note at the top of the original selection
+      local orig_line = orig_track:line(sel.start_line)
+      orig_line:note_column(1).note_value = 121 -- OFF note
+      orig_line:note_column(1).instrument_value = 255 -- No instrument
+      orig_line:note_column(1).volume_value = 255 -- No volume
+      renoise.app():show_status("Rendered selection, added new note, cut original selection, and added OFF note")
     else
       renoise.app():show_status("Rendered selection to new instrument and added C-4 note in new track")
     end
@@ -154,9 +163,13 @@ function M.render_selection_to_next_track(destructive)
     line:note_column(1).instrument_value = new_instr_idx - 1 -- 0-based
     line:note_column(1).volume_value = 0xFF -- full velocity (255 in hex)
 
-    -- 3. Optionally cut (clear) all note/effect data in the original selection
+    -- 3. Ensure the next track is unmuted and focus it
+    song.tracks[next_track_idx].mute_state = renoise.Track.MUTE_STATE_ACTIVE
+    song.selected_track_index = next_track_idx
+
+    -- 4. Optionally cut (clear) all note/effect data in the original selection
     if destructive then
-      local orig_track = pattern:track(song.selected_track_index)
+      local orig_track = pattern:track(song.selected_track_index - 1) -- Use original track index
       for l = sel.start_line, sel.end_line do
         local orig_line = orig_track:line(l)
         for nc = 1, #orig_line.note_columns do
@@ -166,7 +179,12 @@ function M.render_selection_to_next_track(destructive)
           orig_line:effect_column(ec):clear()
         end
       end
-      renoise.app():show_status("Rendered selection, added new note to next track, and cut original selection")
+      -- Add an 'off' note at the top of the original selection
+      local orig_line = orig_track:line(sel.start_line)
+      orig_line:note_column(1).note_value = 121 -- OFF note
+      orig_line:note_column(1).instrument_value = 255 -- No instrument
+      orig_line:note_column(1).volume_value = 255 -- No volume
+      renoise.app():show_status("Rendered selection, added new note to next track, cut original selection, and added OFF note")
     else
       renoise.app():show_status("Rendered selection to new instrument and added C-4 note in next track")
     end
