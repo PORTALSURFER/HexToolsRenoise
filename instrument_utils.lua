@@ -460,59 +460,62 @@ function M.convert_automation_to_pattern()
     end
   end
   -- Interpolate and write values for each line in the selection
-  for line_idx = sel.start_line, sel.end_line do
-    local value = 0
-    if #points == 1 then
-      value = points[1].value
-    elseif line_idx <= points[1].time then
-      value = points[1].value
-    elseif line_idx >= points[#points].time then
-      value = points[#points].value
-    else
-      for i = 1, #points - 1 do
-        local pt1 = points[i]
-        local pt2 = points[i + 1]
-        if line_idx == pt1.time then
-          value = pt1.value
-          break
-        elseif line_idx > pt1.time and line_idx < pt2.time then
-          local t = (line_idx - pt1.time) / (pt2.time - pt1.time)
-          value = pt1.value + (pt2.value - pt1.value) * t
-          break
-        elseif line_idx == pt2.time then
-          value = pt2.value
-          break
+  if is_track_volume then
+    local last_nonzero = false
+    for line_idx = sel.start_line, sel.end_line do
+      local value = 0
+      if #points == 1 then
+        value = points[1].value
+      elseif line_idx <= points[1].time then
+        value = points[1].value
+      elseif line_idx >= points[#points].time then
+        value = points[#points].value
+      else
+        for i = 1, #points - 1 do
+          local pt1 = points[i]
+          local pt2 = points[i + 1]
+          if line_idx == pt1.time then
+            value = pt1.value
+            break
+          elseif line_idx > pt1.time and line_idx < pt2.time then
+            local t = (line_idx - pt1.time) / (pt2.time - pt1.time)
+            value = pt1.value + (pt2.value - pt1.value) * t
+            break
+          elseif line_idx == pt2.time then
+            value = pt2.value
+            break
+          end
         end
       end
-    end
-    local line = track:line(line_idx)
-    if is_track_volume then
-      -- Set volume for all note columns, but do not insert dummy notes
+      local line = track:line(line_idx)
       for nc = 1, #line.note_columns do
         local col = line.note_columns[nc]
-        -- Scale automation value (0.0-1.0) to 0-127, 255 for empty
         local v = math.floor(value * 127 + 0.5)
         if v > 0 and v < 127 then
           col.volume_value = v
+          last_nonzero = true
+        elseif v == 0 and last_nonzero then
+          col.volume_value = 0
+          last_nonzero = false
         else
-          col.volume_value = 255 -- skip 00 and FF
+          col.volume_value = 255
         end
       end
-    else
-      -- Write to a free effect column
-      local fx_col = nil
-      for ec = 1, #line.effect_columns do
-        if line:effect_column(ec).is_empty then
-          fx_col = line:effect_column(ec)
-          break
-        end
+    end
+  else
+    -- Write to a free effect column
+    local fx_col = nil
+    for ec = 1, #line.effect_columns do
+      if line:effect_column(ec).is_empty then
+        fx_col = line:effect_column(ec)
+        break
       end
-      if fx_col then
-        -- Encode device/parameter and value (0-255)
-        local value_255 = math.floor(value * 255 + 0.5)
-        fx_col.number_string = string.format("%02X%02X", device_idx - 1, param_idx - 1)
-        fx_col.amount_value = value_255
-      end
+    end
+    if fx_col then
+      -- Encode device/parameter and value (0-255)
+      local value_255 = math.floor(value * 255 + 0.5)
+      fx_col.number_string = string.format("%02X%02X", device_idx - 1, param_idx - 1)
+      fx_col.amount_value = value_255
     end
   end
   -- Remove the automation curve after conversion
@@ -568,21 +571,53 @@ function M.convert_pattern_to_automation()
     auto:clear()
   end
   if is_track_volume then
-    -- For each line, if any note column has a set volume_value, use the highest value for automation
+    -- First pass: buffer states
+    local buffer = {}
     for line_idx = sel.start_line, sel.end_line do
       local line = track:line(line_idx)
       local max_vol = nil
+      local has_zero = false
+      local all_empty = true
       for nc = 1, #line.note_columns do
         local col = line.note_columns[nc]
-        if col.volume_value ~= 255 then
+        if col.volume_value == 0 then
+          has_zero = true
+          all_empty = false
+        elseif col.volume_value > 0 and col.volume_value < 127 then
           if not max_vol or col.volume_value > max_vol then
             max_vol = col.volume_value
           end
+          all_empty = false
+        elseif col.volume_value == 255 then
+          -- ..
         end
       end
       if max_vol then
-        local value = max_vol / 127
-        auto:add_point_at(line_idx, value)
+        table.insert(buffer, {type = 'nonzero', value = max_vol / 127, line = line_idx})
+      elseif has_zero then
+        table.insert(buffer, {type = 'zero', value = 0.0, line = line_idx})
+      elseif all_empty then
+        table.insert(buffer, {type = 'empty', value = 1.0, line = line_idx})
+      end
+    end
+    -- Second pass: process buffer and emit automation points
+    local last_type = nil
+    for i, entry in ipairs(buffer) do
+      if entry.type == 'nonzero' then
+        auto:add_point_at(entry.line, entry.value)
+        last_type = 'nonzero'
+      elseif entry.type == 'zero' then
+        if last_type == 'nonzero' or last_type == 'empty' then
+          auto:add_point_at(entry.line, 0.0)
+          last_type = 'zero'
+        end
+        -- skip consecutive zero
+      elseif entry.type == 'empty' then
+        if last_type == 'nonzero' or last_type == nil then
+          auto:add_point_at(entry.line, 1.0)
+          last_type = 'empty'
+        end
+        -- skip consecutive empty or empty after zero
       end
     end
   else
