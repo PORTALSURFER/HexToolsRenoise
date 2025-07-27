@@ -301,42 +301,17 @@ end
 function M.remap_selected_notes_to_this()
   local song = renoise.song()
   local target_instr = song.selected_instrument_index - 1 -- 0-based
-  local sel = song.selection_in_pattern
-  if not sel then
-    renoise.app():show_status("No selection in pattern editor.")
-    return
-  end
-  local msg = ""
-  local start_track = sel.start_track or song.selected_track_index
-  local end_track = sel.end_track or song.selected_track_index
-  for track_idx = start_track, end_track do
-    local patt = song:pattern(song.selected_pattern_index)
-    local track = patt:track(track_idx)
-    if utils.DEBUG then
-      msg = msg .. string.format("Track %d:\n", track_idx)
-    end
-    for line_idx = sel.start_line, sel.end_line do
-      local line = track:line(line_idx)
-      if utils.DEBUG then
-        msg = msg .. string.format("  Line %d: %d note columns\n", line_idx, #line.note_columns)
-      end
-      for nc = 1, #line.note_columns do
-        local col = line.note_columns[nc]
-        if col.instrument_value ~= 255 then
-          if utils.DEBUG then
-            msg = msg .. string.format("    Col %d: note_value=%s, instr=%02X\n", nc, tostring(col.note_value), col.instrument_value)
-          else
-            if col.note_value ~= 121 then -- not empty
-              col.instrument_value = target_instr
-            end
-          end
-        end
-      end
-    end
-  end
+  local notes = utils.get_selected_notes()
   if utils.DEBUG then
+    local msg = ""
+    for _, n in ipairs(notes) do
+      msg = msg .. string.format("Pattern %d, Track %d, Line %d, Col %d: note_value=%s, instr=%02X\n", n.pattern, n.track, n.line, n.column, tostring(n.note_column.note_value), n.note_column.instrument_value)
+    end
     utils.debug_messagebox(msg)
   else
+    for _, n in ipairs(notes) do
+      n.note_column.instrument_value = target_instr
+    end
     renoise.app():show_status("Remapped selected notes to instrument " .. string.format("%02X", target_instr))
   end
 end
