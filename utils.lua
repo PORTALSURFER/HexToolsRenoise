@@ -78,6 +78,8 @@ local last_collapsed_pattern_idx = nil
 local reorder_collapsed_tracks = false -- Reordering disabled (too slow); set to true to enable
 local auto_collapse_before_jump = true -- Auto-collapse before jumping (default: true)
 local pattern_collapsed_state = {} -- Track collapsed state per pattern
+local last_jumped_track = nil -- Track the last track we jumped to via collapsed navigation
+local last_jumped_track_was_empty = nil -- Track if the jumped track was empty when we jumped to it
 
 
 -- Track colors (RGB 0-255)
@@ -290,6 +292,50 @@ local function is_pattern_collapsed()
   return pattern_collapsed_state[patt_idx] == true
 end
 
+-- Check if a track has notes in the current pattern
+local function track_has_notes(track_idx)
+  local song = renoise.song()
+  local patt_idx = song.selected_pattern_index
+  local pattern = song:pattern(patt_idx)
+  local track = pattern:track(track_idx)
+  return not track.is_empty
+end
+
+-- Handle leaving a jumped track (collapse if still empty, color orange if has notes)
+local function handle_leaving_jumped_track()
+  if last_jumped_track then
+    local song = renoise.song()
+    local track = song.tracks[last_jumped_track]
+    
+    renoise.app():show_status("DEBUG: Handling leaving track " .. last_jumped_track)
+    
+    if track and track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
+      local has_notes_now = track_has_notes(last_jumped_track)
+      
+      renoise.app():show_status("DEBUG: Track " .. last_jumped_track .. " has notes: " .. tostring(has_notes_now))
+      
+      if has_notes_now then
+        -- Track now has notes, color it orange like other active tracks
+        track.color = active_track_color
+        renoise.app():show_status("Track " .. last_jumped_track .. " has notes, keeping uncollapsed")
+      else
+        -- Track is still empty, collapse it and color it grey
+        track.collapsed = true
+        track.color = collapsed_track_color
+        renoise.app():show_status("Track " .. last_jumped_track .. " is empty, collapsing")
+      end
+    else
+      renoise.app():show_status("DEBUG: Track " .. last_jumped_track .. " is not a sequencer track or doesn't exist")
+    end
+    
+    -- Clear the tracking
+    last_jumped_track = nil
+    last_jumped_track_was_empty = nil
+  else
+    renoise.app():show_status("DEBUG: No last_jumped_track to handle")
+  end
+end
+
 -- Jump to next non-collapsed track
 local function jump_to_next_track()
   local song = renoise.song()
@@ -302,11 +348,25 @@ local function jump_to_next_track()
   local current_track = song.selected_track_index
   local total_tracks = #song.tracks
   
+  -- Handle leaving previous jumped track BEFORE we change selection
+  renoise.app():show_status("DEBUG: last_jumped_track=" .. tostring(last_jumped_track) .. ", current_track=" .. current_track)
+  if last_jumped_track and last_jumped_track == current_track then
+    renoise.app():show_status("DEBUG: Calling handle_leaving_jumped_track")
+    handle_leaving_jumped_track()
+  else
+    renoise.app():show_status("DEBUG: Not calling handle_leaving_jumped_track")
+  end
+  
   -- Start from the next track
   for i = current_track + 1, total_tracks do
     local track = song.tracks[i]
     if track.type == renoise.Track.TRACK_TYPE_SEQUENCER and not track.collapsed then
       song.selected_track_index = i
+      
+      -- Reset pattern collapsed state when jumping to uncollapsed track
+      local patt_idx = song.selected_pattern_index
+      pattern_collapsed_state[patt_idx] = false
+      
       renoise.app():show_status("Jumped to next track: " .. i)
       return
     end
@@ -317,6 +377,11 @@ local function jump_to_next_track()
     local track = song.tracks[i]
     if track.type == renoise.Track.TRACK_TYPE_SEQUENCER and not track.collapsed then
       song.selected_track_index = i
+      
+      -- Reset pattern collapsed state when jumping to uncollapsed track
+      local patt_idx = song.selected_pattern_index
+      pattern_collapsed_state[patt_idx] = false
+      
       renoise.app():show_status("Jumped to next track (wrapped): " .. i)
       return
     end
@@ -337,11 +402,25 @@ local function jump_to_previous_track()
   local current_track = song.selected_track_index
   local total_tracks = #song.tracks
   
+  -- Handle leaving previous jumped track BEFORE we change selection
+  renoise.app():show_status("DEBUG: last_jumped_track=" .. tostring(last_jumped_track) .. ", current_track=" .. current_track)
+  if last_jumped_track and last_jumped_track == current_track then
+    renoise.app():show_status("DEBUG: Calling handle_leaving_jumped_track")
+    handle_leaving_jumped_track()
+  else
+    renoise.app():show_status("DEBUG: Not calling handle_leaving_jumped_track")
+  end
+  
   -- Start from the previous track
   for i = current_track - 1, 1, -1 do
     local track = song.tracks[i]
     if track.type == renoise.Track.TRACK_TYPE_SEQUENCER and not track.collapsed then
       song.selected_track_index = i
+      
+      -- Reset pattern collapsed state when jumping to uncollapsed track
+      local patt_idx = song.selected_pattern_index
+      pattern_collapsed_state[patt_idx] = false
+      
       renoise.app():show_status("Jumped to previous track: " .. i)
       return
     end
@@ -352,6 +431,11 @@ local function jump_to_previous_track()
     local track = song.tracks[i]
     if track.type == renoise.Track.TRACK_TYPE_SEQUENCER and not track.collapsed then
       song.selected_track_index = i
+      
+      -- Reset pattern collapsed state when jumping to uncollapsed track
+      local patt_idx = song.selected_pattern_index
+      pattern_collapsed_state[patt_idx] = false
+      
       renoise.app():show_status("Jumped to previous track (wrapped): " .. i)
       return
     end
@@ -363,6 +447,120 @@ end
 M.jump_to_next_track = jump_to_next_track
 M.jump_to_previous_track = jump_to_previous_track
 
+-- Jump to next collapsed track (uncollapse target track)
+local function jump_to_next_collapsed_track()
+  local song = renoise.song()
+  local current_track = song.selected_track_index
+  local total_tracks = #song.tracks
+  
+  -- Start from the next track
+  for i = current_track + 1, total_tracks do
+    local track = song.tracks[i]
+    if track.type == renoise.Track.TRACK_TYPE_SEQUENCER and track.collapsed then
+      -- Uncollapse the target track
+      track.collapsed = false
+      -- Store original color if not already stored, then tint white
+      if not previous_colors[i] then
+        previous_colors[i] = { track.color[1], track.color[2], track.color[3] }
+      end
+      track.color = { 255, 255, 255 }  -- White
+      song.selected_track_index = i
+      
+      -- Track this jumped track and whether it was empty
+      last_jumped_track = i
+      last_jumped_track_was_empty = track_has_notes(i)
+      
+      -- Update pattern collapsed state since we just uncollapsed a track
+      local patt_idx = song.selected_pattern_index
+      pattern_collapsed_state[patt_idx] = false
+      
+      renoise.app():show_status("DEBUG: Set last_jumped_track=" .. i .. ", was_empty=" .. tostring(last_jumped_track_was_empty))
+      renoise.app():show_status("Jumped to next collapsed track: " .. i)
+      return
+    end
+  end
+  
+  -- If no next collapsed track found, wrap around to the beginning
+  for i = 1, current_track - 1 do
+    local track = song.tracks[i]
+    if track.type == renoise.Track.TRACK_TYPE_SEQUENCER and track.collapsed then
+      -- Uncollapse the target track
+      track.collapsed = false
+      -- Store original color if not already stored, then tint white
+      if not previous_colors[i] then
+        previous_colors[i] = { track.color[1], track.color[2], track.color[3] }
+      end
+      track.color = { 255, 255, 255 }  -- White
+      song.selected_track_index = i
+      
+      -- Track this jumped track and whether it was empty
+      last_jumped_track = i
+      last_jumped_track_was_empty = track_has_notes(i)
+      
+      renoise.app():show_status("DEBUG: Set last_jumped_track=" .. i .. ", was_empty=" .. tostring(last_jumped_track_was_empty))
+      renoise.app():show_status("Jumped to next collapsed track (wrapped): " .. i)
+      return
+    end
+  end
+  
+  renoise.app():show_status("No other collapsed tracks found")
+end
+
+-- Jump to previous collapsed track (uncollapse target track)
+local function jump_to_previous_collapsed_track()
+  local song = renoise.song()
+  local current_track = song.selected_track_index
+  local total_tracks = #song.tracks
+  
+  -- Start from the previous track
+  for i = current_track - 1, 1, -1 do
+    local track = song.tracks[i]
+    if track.type == renoise.Track.TRACK_TYPE_SEQUENCER and track.collapsed then
+      -- Uncollapse the target track
+      track.collapsed = false
+      -- Store original color if not already stored, then tint white
+      if not previous_colors[i] then
+        previous_colors[i] = { track.color[1], track.color[2], track.color[3] }
+      end
+      track.color = { 255, 255, 255 }  -- White
+      song.selected_track_index = i
+      
+      -- Track this jumped track and whether it was empty
+      last_jumped_track = i
+      last_jumped_track_was_empty = track_has_notes(i)
+      
+      renoise.app():show_status("DEBUG: Set last_jumped_track=" .. i .. ", was_empty=" .. tostring(last_jumped_track_was_empty))
+      renoise.app():show_status("Jumped to previous collapsed track: " .. i)
+      return
+    end
+  end
+  
+  -- If no previous collapsed track found, wrap around to the end
+  for i = total_tracks, current_track + 1, -1 do
+    local track = song.tracks[i]
+    if track.type == renoise.Track.TRACK_TYPE_SEQUENCER and track.collapsed then
+      -- Uncollapse the target track
+      track.collapsed = false
+      -- Store original color if not already stored, then tint white
+      if not previous_colors[i] then
+        previous_colors[i] = { track.color[1], track.color[2], track.color[3] }
+      end
+      track.color = { 255, 255, 255 }  -- White
+      song.selected_track_index = i
+      
+      -- Track this jumped track and whether it was empty
+      last_jumped_track = i
+      last_jumped_track_was_empty = track_has_notes(i)
+      
+      renoise.app():show_status("DEBUG: Set last_jumped_track=" .. i .. ", was_empty=" .. tostring(last_jumped_track_was_empty))
+      renoise.app():show_status("Jumped to previous collapsed track (wrapped): " .. i)
+      return
+    end
+  end
+  
+  renoise.app():show_status("No other collapsed tracks found")
+end
+
 -- Toggle auto-collapse before jump option
 local function toggle_auto_collapse_before_jump()
   auto_collapse_before_jump = not auto_collapse_before_jump
@@ -372,5 +570,8 @@ end
 
 M.toggle_auto_collapse_before_jump = toggle_auto_collapse_before_jump
 M.is_pattern_collapsed = is_pattern_collapsed
+M.jump_to_next_collapsed_track = jump_to_next_collapsed_track
+M.jump_to_previous_collapsed_track = jump_to_previous_collapsed_track
+M.handle_leaving_jumped_track = handle_leaving_jumped_track
 
 return M 

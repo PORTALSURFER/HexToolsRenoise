@@ -84,6 +84,14 @@
         <Path>Pattern Editor:Tools:Toggle Auto-Collapse Before Jump</Path>
         <Invoke>toggle_auto_collapse_before_jump</Invoke>
       </Binding>
+      <Binding>
+        <Path>Pattern Editor:Tools:Jump To Next Collapsed Track</Path>
+        <Invoke>jump_to_next_collapsed_track</Invoke>
+      </Binding>
+      <Binding>
+        <Path>Pattern Editor:Tools:Jump To Previous Collapsed Track</Path>
+        <Invoke>jump_to_previous_collapsed_track</Invoke>
+      </Binding>
     </Bindings>
   </KeyBindings>
 </RenoiseScriptingTool>
