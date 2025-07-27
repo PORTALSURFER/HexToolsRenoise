@@ -88,6 +88,10 @@ local function remap_selected_notes_to_this()
   instrument_utils.remap_selected_notes_to_this()
 end
 
+local function focus_automation_editor_for_selection()
+  instrument_utils.focus_automation_editor_for_selection()
+end
+
 local pending_return_state = nil
 
 local registration = require("registration")
@@ -107,5 +111,6 @@ registration.register_menu_and_keybindings({
   increase_velocity = instrument_utils.increase_velocity,
   decrease_velocity = instrument_utils.decrease_velocity,
   increase_velocity_sensitive = instrument_utils.increase_velocity_sensitive,
-  decrease_velocity_sensitive = instrument_utils.decrease_velocity_sensitive
+  decrease_velocity_sensitive = instrument_utils.decrease_velocity_sensitive,
+  focus_automation_editor_for_selection = focus_automation_editor_for_selection
 })

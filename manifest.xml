@@ -56,6 +56,10 @@
         <Path>Pattern Editor:Tools:Decrease Velocity (Sensitive)</Path>
         <Invoke>decrease_velocity_sensitive</Invoke>
       </Binding>
+      <Binding>
+        <Path>Pattern Editor:Tools:Focus Automation Editor for Selection</Path>
+        <Invoke>focus_automation_editor_for_selection</Invoke>
+      </Binding>
     </Bindings>
   </KeyBindings>
 </RenoiseScriptingTool>

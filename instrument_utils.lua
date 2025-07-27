@@ -376,4 +376,20 @@ function M.decrease_velocity_sensitive()
   renoise.app():show_status("Decreased velocity of selected notes by 1")
 end
 
+function M.focus_automation_editor_for_selection()
+  local song = renoise.song()
+  local sel = song.selection_in_pattern
+  if not sel then
+    renoise.app():show_status("No selection in pattern editor.")
+    return
+  end
+  -- Focus the automation editor (lower frame)
+  renoise.app().window.active_lower_frame = renoise.ApplicationWindow.LOWER_FRAME_TRACK_AUTOMATION
+  -- Set the selected track, pattern, and line to the start of the selection
+  song.selected_track_index = sel.start_track or song.selected_track_index
+  song.selected_pattern_index = song.selected_pattern_index -- already current pattern
+  song.selected_line_index = sel.start_line or song.selected_line_index
+  renoise.app():show_status("Focused automation editor for selection.")
+end
+
 return M 
