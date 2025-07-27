@@ -41,6 +41,11 @@ function M.register_menu_and_keybindings(handlers)
   }
 
   renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Sample And Merge Track Notes",
+    invoke = handlers.sample_and_merge_track_notes
+  }
+
+  renoise.tool():add_menu_entry{
     name = "Main Menu:Tools:HexTools:Find Duplicate Single-Sample Instruments",
     invoke = handlers.find_duplicate_single_sample_instruments
   }
@@ -96,6 +101,11 @@ function M.register_menu_and_keybindings(handlers)
   }
 
   renoise.tool():add_menu_entry{
+    name = "Track:Sample And Merge Track Notes",
+    invoke = handlers.sample_and_merge_track_notes
+  }
+
+  renoise.tool():add_menu_entry{
     name = "Main Menu:Tools:HexTools:Toggle Auto-Collapse On Focus Loss",
     invoke = handlers.toggle_auto_collapse_on_focus_loss
   }
@@ -123,6 +133,10 @@ function M.register_menu_and_keybindings(handlers)
   renoise.tool():add_keybinding {
     name = "Pattern Editor:Tools:Render Selection To Next Track Destructive",
     invoke = handlers.render_selection_to_next_track_destructive
+  }
+  renoise.tool():add_keybinding {
+    name = "Pattern Editor:Tools:Sample And Merge Track Notes",
+    invoke = handlers.sample_and_merge_track_notes
   }
   renoise.tool():add_keybinding {
     name = "Pattern Editor:Tools:Find Duplicate Single-Sample Instruments",

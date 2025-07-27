@@ -30,6 +30,10 @@ local function render_selection_to_next_track_destructive()
   render_utils.render_selection_to_next_track(true)
 end
 
+local function sample_and_merge_track_notes()
+  render_utils.sample_and_merge_track_notes()
+end
+
 local function on_transport_stopped()
   if not pending_return_state then return end
   local song = renoise.song()
@@ -151,6 +155,7 @@ registration.register_menu_and_keybindings({
   render_selection_to_new_track_destructive = render_selection_to_new_track_destructive,
   render_selection_to_next_track = render_selection_to_next_track,
   render_selection_to_next_track_destructive = render_selection_to_next_track_destructive,
+  sample_and_merge_track_notes = sample_and_merge_track_notes,
   set_playhead_buffer = set_playhead_buffer,
   play_from_buffer = play_from_buffer,
   jump_to_test_position = jump_to_test_position,

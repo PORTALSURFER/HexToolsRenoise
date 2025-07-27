@@ -191,4 +191,148 @@ function M.render_selection_to_next_track(destructive)
   end)
 end
 
+-- Sample all notes from a track in the current pattern and merge them into the focused track
+function M.sample_and_merge_track_notes()
+  local song = renoise.song()
+  local sel = song.selection_in_pattern
+
+  if not sel then
+    renoise.app():show_status("Nothing selected to sample from")
+    return
+  end
+
+  -- Determine source track from selection
+  local source_track_idx = sel.start_track or song.selected_track_index
+  local target_track_idx = song.selected_track_index
+
+  -- Don't allow sampling from the same track
+  if source_track_idx == target_track_idx then
+    renoise.app():show_status("Cannot sample from the same track")
+    return
+  end
+
+  local pattern = song:pattern(song.selected_pattern_index)
+  local source_track = pattern:track(source_track_idx)
+  local target_track = pattern:track(target_track_idx)
+
+  -- Collect all notes from source track
+  local notes_to_merge = {}
+  local effects_to_merge = {}
+  for line_idx = 1, pattern.number_of_lines do
+    local line = source_track:line(line_idx)
+    for nc = 1, #line.note_columns do
+      local note_col = line:note_column(nc)
+      if note_col.note_value ~= 121 and note_col.instrument_value ~= 255 then -- Not empty
+        table.insert(notes_to_merge, {
+          line = line_idx,
+          column = nc,
+          note_value = note_col.note_value,
+          instrument_value = note_col.instrument_value,
+          volume_value = note_col.volume_value,
+          panning_value = note_col.panning_value,
+          delay_value = note_col.delay_value
+        })
+      end
+    end
+    -- Collect effect columns
+    for ec = 1, #line.effect_columns do
+      local effect_col = line:effect_column(ec)
+      if not effect_col.is_empty then
+        table.insert(effects_to_merge, {
+          line = line_idx,
+          column = ec,
+          number_value = effect_col.number_value,
+          amount_value = effect_col.amount_value
+        })
+      end
+    end
+  end
+
+  if #notes_to_merge == 0 and #effects_to_merge == 0 then
+    renoise.app():show_status("No notes or effects found in source track to merge")
+    return
+  end
+
+  -- Find the first empty note column in target track
+  local first_empty_column = 1
+  for line_idx = 1, pattern.number_of_lines do
+    local line = target_track:line(line_idx)
+    for nc = 1, #line.note_columns do
+      local note_col = line:note_column(nc)
+      if note_col.note_value == 121 and note_col.instrument_value == 255 then -- Empty
+        first_empty_column = nc
+        break
+      end
+    end
+    if first_empty_column > 1 then break end
+  end
+
+  -- Find the first empty effect column in target track
+  local first_empty_effect_column = 1
+  for line_idx = 1, pattern.number_of_lines do
+    local line = target_track:line(line_idx)
+    for ec = 1, #line.effect_columns do
+      local effect_col = line:effect_column(ec)
+      if effect_col.is_empty then
+        first_empty_effect_column = ec
+        break
+      end
+    end
+    if first_empty_effect_column > 1 then break end
+  end
+
+  -- Check if we have enough columns in target track
+  local target_line = target_track:line(1)
+  if first_empty_column > #target_line.note_columns then
+    renoise.app():show_status("Target track doesn't have enough note columns")
+    return
+  end
+  if first_empty_effect_column > #target_line.effect_columns then
+    renoise.app():show_status("Target track doesn't have enough effect columns")
+    return
+  end
+
+  -- Merge notes into target track
+  local merged_count = 0
+  for _, note_data in ipairs(notes_to_merge) do
+    local line = target_track:line(note_data.line)
+    local note_col = line:note_column(first_empty_column)
+    
+    note_col.note_value = note_data.note_value
+    note_col.instrument_value = note_data.instrument_value
+    note_col.volume_value = note_data.volume_value
+    note_col.panning_value = note_data.panning_value
+    note_col.delay_value = note_data.delay_value
+    
+    merged_count = merged_count + 1
+  end
+
+  -- Merge effects into target track
+  local merged_effects_count = 0
+  for _, effect_data in ipairs(effects_to_merge) do
+    local line = target_track:line(effect_data.line)
+    local effect_col = line:effect_column(first_empty_effect_column)
+    
+    effect_col.number_value = effect_data.number_value
+    effect_col.amount_value = effect_data.amount_value
+    
+    merged_effects_count = merged_effects_count + 1
+  end
+
+  -- Clear the source track
+  for line_idx = 1, pattern.number_of_lines do
+    local line = source_track:line(line_idx)
+    for nc = 1, #line.note_columns do
+      line:note_column(nc):clear()
+    end
+    for ec = 1, #line.effect_columns do
+      line:effect_column(ec):clear()
+    end
+  end
+
+  local status_msg = string.format("Merged %d notes and %d effects from track %d to track %d", 
+    merged_count, merged_effects_count, source_track_idx, target_track_idx)
+  renoise.app():show_status(status_msg)
+end
+
 return M 

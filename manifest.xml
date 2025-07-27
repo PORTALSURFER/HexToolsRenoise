@@ -29,6 +29,10 @@
         <Invoke>render_selection_to_next_track_destructive</Invoke>
       </Binding>
       <Binding>
+        <Path>Pattern Editor:Tools:Sample And Merge Track Notes</Path>
+        <Invoke>sample_and_merge_track_notes</Invoke>
+      </Binding>
+      <Binding>
         <Path>Pattern Editor:Tools:Find Duplicate Single-Sample Instruments</Path>
         <Invoke>find_duplicate_single_sample_instruments</Invoke>
       </Binding>
