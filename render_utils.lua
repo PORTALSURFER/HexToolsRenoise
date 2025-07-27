@@ -39,7 +39,7 @@ function M.render_selection_to_new_track(destructive)
     local line = track:line(sel.start_line)
     line:note_column(1).note_value = 48 -- C-4
     line:note_column(1).instrument_value = new_instr_idx - 1 -- 0-based
-    line:note_column(1).volume_value = 0x80 -- full velocity (128 in hex)
+    line:note_column(1).volume_value = 0xFF -- full velocity (255 in hex)
 
     -- 4. Optionally cut (clear) all note/effect data in the original selection
     if destructive then
@@ -100,7 +100,7 @@ function M.render_selection_to_next_track(destructive)
     local line = track:line(sel.start_line)
     line:note_column(1).note_value = 48 -- C-4
     line:note_column(1).instrument_value = new_instr_idx - 1 -- 0-based
-    line:note_column(1).volume_value = 0x80 -- full velocity (128 in hex)
+    line:note_column(1).volume_value = 0xFF -- full velocity (255 in hex)
 
     -- 3. Optionally cut (clear) all note/effect data in the original selection
     if destructive then
