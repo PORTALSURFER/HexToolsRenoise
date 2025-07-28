@@ -87,7 +87,7 @@ local last_jumped_track_was_empty  = nil
 local auto_collapse_on_focus_loss  = true  -- new setting
 
 -- colours
-local active_track_color    = {255, 100, 0}
+local active_track_color    = {61, 111, 202}
 local collapsed_track_color = {100, 100, 100}
 local previous_colors       = {}
 

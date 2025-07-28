@@ -31,9 +31,7 @@ function M.play_from_buffer()
   local seq_idx = math.min(play_buffer.sequence, #song.sequencer.pattern_sequence)
   song.selected_sequence_index = seq_idx
 
-  local track_idx = math.min(play_buffer.track, #song.tracks)
-  song.selected_track_index = track_idx
-
+  -- Only use the line position from buffer, keep current track
   local patt_idx = song.sequencer:pattern(seq_idx)
   local patt = song:pattern(patt_idx)
   local line_idx = math.min(play_buffer.line, patt.number_of_lines)
