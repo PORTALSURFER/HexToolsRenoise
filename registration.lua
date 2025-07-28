@@ -105,6 +105,16 @@ function M.register_menu_and_keybindings(handlers)
     invoke = handlers.toggle_auto_collapse_on_focus_loss
   }
 
+  renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Double Pattern Length",
+    invoke = handlers.double_pattern_length
+  }
+
+  renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Halve Pattern Length",
+    invoke = handlers.halve_pattern_length
+  }
+
   renoise.tool():add_keybinding {
     name = "Pattern Editor:Tools:Set Playhead Buffer",
     invoke = handlers.set_playhead_buffer
@@ -201,6 +211,16 @@ function M.register_menu_and_keybindings(handlers)
     name = "Pattern Editor:Tools:Toggle Auto-Collapse On Focus Loss",
     invoke = handlers.toggle_auto_collapse_on_focus_loss
   }
+
+  renoise.tool():add_keybinding {
+    name = "Pattern Editor:Tools:Double Pattern Length",
+    invoke = handlers.double_pattern_length
+  }
+
+  renoise.tool():add_keybinding {
+    name = "Pattern Editor:Tools:Halve Pattern Length",
+    invoke = handlers.halve_pattern_length
+  }
   renoise.tool():add_menu_entry{
     name = "Pattern Editor:Focus Automation Editor for Selection",
     invoke = handlers.focus_automation_editor_for_selection
@@ -217,6 +237,16 @@ function M.register_menu_and_keybindings(handlers)
   renoise.tool():add_menu_entry{
     name = "--- Pattern Editor:Sample And Merge Track Notes",
     invoke = handlers.sample_and_merge_track_notes
+  }
+
+  renoise.tool():add_menu_entry{
+    name = "--- Pattern Editor:Double Pattern Length",
+    invoke = handlers.double_pattern_length
+  }
+
+  renoise.tool():add_menu_entry{
+    name = "Pattern Editor:Halve Pattern Length",
+    invoke = handlers.halve_pattern_length
   }
 end
 

@@ -9,6 +9,7 @@ end
 local render_utils = require("render_utils")
 local navigation_utils = require("navigation_utils")
 local instrument_utils = require("instrument_utils")
+local pattern_utils = require("pattern_utils")
 local utils = require("utils")
 
 -- Buffer for play/return state
@@ -149,6 +150,14 @@ local function toggle_auto_collapse_on_focus_loss()
   utils.toggle_auto_collapse_on_focus_loss()
 end
 
+local function double_pattern_length()
+  pattern_utils.double_pattern_length()
+end
+
+local function halve_pattern_length()
+  pattern_utils.halve_pattern_length()
+end
+
 registration.register_menu_and_keybindings({
   show_hello = show_hello,
   render_selection_to_new_track = render_selection_to_new_track,
@@ -177,9 +186,36 @@ registration.register_menu_and_keybindings({
   jump_to_next_collapsed_track = jump_to_next_collapsed_track,
   jump_to_previous_collapsed_track = jump_to_previous_collapsed_track,
   toggle_auto_collapse_before_jump = toggle_auto_collapse_before_jump,
-  toggle_auto_collapse_on_focus_loss = toggle_auto_collapse_on_focus_loss
+  toggle_auto_collapse_on_focus_loss = toggle_auto_collapse_on_focus_loss,
+  double_pattern_length = double_pattern_length,
+  halve_pattern_length = halve_pattern_length
 })
 
--- Set up notifier for track selection changes
-local song = renoise.song()
-song.selected_track_index_observable:add_notifier(utils.handle_track_focus_change)
+-- Initialize track selection notifier after script is loaded
+local function initialize_track_notifier()
+  local song = renoise.song()
+  if song then
+    song.selected_track_index_observable:add_notifier(utils.handle_track_focus_change)
+  end
+end
+
+-- Use a timer to delay initialization until API is ready
+local function setup_delayed_initialization()
+  local tool = renoise.tool()
+  if tool then
+    local notifier_function
+    notifier_function = function()
+      initialize_track_notifier()
+      tool.app_idle_observable:remove_notifier(notifier_function)
+    end
+    tool.app_idle_observable:add_notifier(notifier_function)
+  else
+    -- Fallback: try again after a short delay
+    renoise.app():schedule_timer(0.1, function()
+      setup_delayed_initialization()
+    end)
+  end
+end
+
+-- Start the delayed initialization
+setup_delayed_initialization()
