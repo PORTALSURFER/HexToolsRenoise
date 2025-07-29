@@ -31,8 +31,8 @@ HexTools adds the following utilities and workflow enhancements to Renoise:
 
 ### **Track Management & Navigation**
 - **Smart Track Collapsing**: Automatically collapse null tracks (empty tracks) with color coding
-  - **Active tracks**: Blue color for tracks with notes
-  - **Null tracks**: Gray color for empty/collapsed tracks  
+  - **Active tracks**: Blue color for tracks with notes (previously orange)
+  - **Null tracks**: Gray color for empty/collapsed tracks (previously dark grey)
   - **Focused tracks**: Red tint for currently selected tracks
 - **Intelligent Track Navigation**: 
   - Jump between active tracks while skipping null tracks
@@ -73,6 +73,10 @@ HexTools adds the following utilities and workflow enhancements to Renoise:
 - **Halve Pattern Length**: Reduce pattern length by half, preserving the first half
 - **Change LPB**: Modify Lines Per Beat while maintaining note timing relationships
 
+### **Menu Integration**
+- **All features accessible** from the Renoise Tools menu or Pattern Editor context menus
+- **Track Visibility Toggle**: Collapse all unused tracks in the current pattern, or expand all tracks if any are collapsed
+
 ## Usage Tips
 
 ### **Track Navigation Workflow**
@@ -106,4 +110,36 @@ All features below can be mapped to custom keys in Renoise via the Preferences >
 - `Pattern Editor:Tools:Render Selection To New Track`
 - `Pattern Editor:Tools:Render Selection To New Track Destructive`
 - `Pattern Editor:Tools:Render Selection To Next Track`
-- `
+- `Pattern Editor:Tools:Render Selection To Next Track Destructive`
+- `Pattern Editor:Tools:Sample And Merge Track Notes`
+- `Pattern Editor:Tools:Find Duplicate Single-Sample Instruments`
+- `Pattern Editor:Tools:Merge Instruments`
+- `Pattern Editor:Tools:Remap Instruments`
+- `Pattern Editor:Tools:Increase Velocity`
+- `Pattern Editor:Tools:Decrease Velocity`
+- `Pattern Editor:Tools:Increase Velocity (Sensitive)`
+- `Pattern Editor:Tools:Decrease Velocity (Sensitive)`
+- `Pattern Editor:Tools:Focus Automation Editor for Selection`
+- `Pattern Editor:Tools:Convert Automation To Pattern`
+- `Pattern Editor:Tools:Convert Pattern To Automation`
+- `Pattern Editor:Tools:Collapse Unused Tracks in Pattern` *(toggles collapse/expand)*
+- `Pattern Editor:Tools:Jump To Next Track (Skip Collapsed)`
+- `Pattern Editor:Tools:Jump To Previous Track (Skip Collapsed)`
+- `Pattern Editor:Tools:Toggle Auto-Collapse Before Jump`
+- `Pattern Editor:Tools:Jump To Next Collapsed Track`
+- `Pattern Editor:Tools:Jump To Previous Collapsed Track`
+- `Pattern Editor:Tools:Toggle Auto-Collapse On Focus Loss`
+- `Pattern Editor:Tools:Double Pattern Length`
+- `Pattern Editor:Tools:Halve Pattern Length`
+- `Pattern Editor:Tools:Change LPB`
+
+## Installation
+
+1. Copy the `HexTools.xrnx` directory into your Renoise `Tools` folder. Renoise will detect the tool automatically.
+2. In Renoise, open the `Tools` menu and choose `HexTools > ...`.
+
+For more details about developing Renoise tools, see the [official API documentation](https://renoise.github.io/xrnx/API/index.htm).
+
+## Mentions
+
+- [esaruoho/paketti](https://github.com/esaruoho/paketti): A great collection of Renoise tools and a source of inspiration for this project.
