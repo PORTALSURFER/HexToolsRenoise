@@ -583,7 +583,7 @@ function M.convert_automation_to_pattern()
         local point = automation.points[i]
         local point_line = point.line or point.time or 0
         if point_line >= sel.start_line and point_line <= sel.end_line then
-          table.insert(points_to_remove, point_line)
+          table.insert(points_to_remove, i)  -- Store the index instead of line value
         end
       end
       
@@ -591,16 +591,22 @@ function M.convert_automation_to_pattern()
       if utils.DEBUG then
         local debug_msg = string.format("Selection: %d-%d\n", sel.start_line, sel.end_line)
         debug_msg = debug_msg .. string.format("Points to remove: %d\n", #points_to_remove)
-        for _, line_value in ipairs(points_to_remove) do
-          debug_msg = debug_msg .. string.format("  Line %d\n", line_value)
+        for _, index in ipairs(points_to_remove) do
+          local point = automation.points[index]
+          local point_line = point.line or point.time or 0
+          local point_time = point.time or point.line or 0
+          debug_msg = debug_msg .. string.format("  Index %d at Line %d (Time %.3f)\n", index, point_line, point_time)
         end
         debug_msg = debug_msg .. string.format("Boundary values: start=%.3f, end=%.3f\n", start_value, end_value)
         utils.debug_messagebox(debug_msg)
       end
       
-      -- Remove points by their line/time value
-      for _, line_value in ipairs(points_to_remove) do
-        automation:remove_point_at(line_value)
+      -- Remove points by their index (in reverse order to avoid index shifting)
+      for i = #points_to_remove, 1, -1 do
+        local index = points_to_remove[i]
+        local point = automation.points[index]
+        local point_time = point.time or point.line or 0
+        automation:remove_point_at(point_time)
       end
       
       -- Add boundary points at the start and end of the selection
