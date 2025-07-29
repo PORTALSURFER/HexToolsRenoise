@@ -1,6 +1,6 @@
 local M = {}
 
-M.DEBUG = false
+M.DEBUG = true
 
 function M.debug_messagebox(msg)
   if M.DEBUG then
