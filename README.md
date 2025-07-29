@@ -1,9 +1,29 @@
 # HexTools for Renoise
 
 **Author:** Hex  
-**Version:** v0.2.0
+**Version:** v0.2.0  
+**Latest Release:** [v0.2.0](https://github.com/hex/HexTools/releases/tag/v0.2.0)
 
 Collection of useful tools for the Renoise digital audio workstation.
+
+## Recent Updates (v0.2.0)
+
+### **New Features**
+- **Pattern Matrix Slot Coloring**: Color selected pattern matrix grid slots with random theme colors
+- **Null Track Navigation**: Jump between null (empty) tracks for quick access to empty tracks
+- **Enhanced Track State Management**: Improved terminology and color coding system
+- **Auto-Collapse for Null Track Navigation**: Automatically collapse patterns before jumping to null tracks
+
+### **Improvements**
+- **Refactored Track Collapse System**: Cleaner terminology and more maintainable code
+- **Better Color Management**: Clear distinction between active, null, and focused tracks
+- **Enhanced User Experience**: More intuitive navigation and visual feedback
+- **Theme Color Integration**: Pattern matrix coloring uses current Renoise skin colors
+
+### **Technical Enhancements**
+- **Improved Code Organization**: Better function naming and structure
+- **Enhanced State Management**: More robust track focus and collapse handling
+- **Better Error Handling**: More reliable navigation and state transitions
 
 ## Features
 
@@ -86,54 +106,4 @@ All features below can be mapped to custom keys in Renoise via the Preferences >
 - `Pattern Editor:Tools:Render Selection To New Track`
 - `Pattern Editor:Tools:Render Selection To New Track Destructive`
 - `Pattern Editor:Tools:Render Selection To Next Track`
-- `Pattern Editor:Tools:Render Selection To Next Track Destructive`
-- `Pattern Editor:Tools:Find Duplicate Single-Sample Instruments`
-- `Pattern Editor:Tools:Merge Instruments`
-- `Pattern Editor:Tools:Remap Instruments`
-- `Pattern Editor:Tools:Increase Velocity`
-- `Pattern Editor:Tools:Decrease Velocity`
-- `Pattern Editor:Tools:Increase Velocity (Sensitive)`
-- `Pattern Editor:Tools:Decrease Velocity (Sensitive)`
-- `Pattern Editor:Tools:Focus Automation Editor for Selection`
-- `Pattern Editor:Tools:Convert Automation To Pattern`
-- `Pattern Editor:Tools:Convert Pattern To Automation`
-- `Pattern Editor:Tools:Collapse Unused Tracks in Pattern` *(toggles collapse/expand)*
-- `Pattern Editor:Tools:Jump To Next Track (Skip Collapsed)`
-- `Pattern Editor:Tools:Jump To Previous Track (Skip Collapsed)`
-- `Pattern Editor:Tools:Jump To Next Collapsed Track`
-- `Pattern Editor:Tools:Jump To Previous Collapsed Track`
-- `Pattern Editor:Tools:Toggle Auto-Collapse Before Jump`
-- `Pattern Editor:Tools:Toggle Auto-Collapse On Focus Loss`
-- `Pattern Editor:Tools:Double Pattern Length`
-- `Pattern Editor:Tools:Halve Pattern Length`
-- `Pattern Editor:Tools:Change LPB`
-- `Pattern Editor:Tools:Color Selected Pattern Slots`
-
-### **Pattern Matrix Tools**
-- `Pattern Matrix:Color Selected Pattern Slots`
-
-## Installation
-
-1. Copy the `HexTools.xrnx` directory into your Renoise `Tools` folder. Renoise will detect the tool automatically.
-2. In Renoise, open the `Tools` menu and choose `HexTools > ...`.
-
-For more details about developing Renoise tools, see the [official API documentation](https://renoise.github.io/xrnx/API/index.htm).
-
-## Technical Details
-
-### **Track State Management**
-- **Active tracks**: Tracks containing notes (blue color)
-- **Null tracks**: Empty tracks that can be collapsed (gray color)
-- **Focused tracks**: Currently selected tracks (red tint)
-- **Auto-collapse**: Automatically collapses null tracks before navigation
-- **Focus management**: Handles track state transitions and color changes
-
-### **Pattern Matrix Coloring**
-- Uses theme colors from the current Renoise skin
-- Supports selection of individual track slots in the pattern matrix
-- Applies consistent random colors to selected slots
-- Integrates with the pattern sequencer selection system
-
-## Mentions
-
-- [esaruoho/paketti](https://github.com/esaruoho/paketti): A great collection of Renoise tools and a source of inspiration for this project.
+- `
