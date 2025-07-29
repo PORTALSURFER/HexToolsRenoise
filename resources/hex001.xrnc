@@ -70,22 +70,22 @@
   <VuMeter_Peak>170,170,170</VuMeter_Peak>
   <VuMeter_Back_Normal>30,30,30</VuMeter_Back_Normal>
   <VuMeter_Back_Clipped>189,112,157</VuMeter_Back_Clipped>
-  <Default_Color_01>85,128,170</Default_Color_01>
-  <Default_Color_02>109,193,230</Default_Color_02>
-  <Default_Color_03>180,170,200</Default_Color_03>
-  <Default_Color_04>229,199,115</Default_Color_04>
-  <Default_Color_05>189,112,157</Default_Color_05>
-  <Default_Color_06>100,140,170</Default_Color_06>
-  <Default_Color_07>155,107,166</Default_Color_07>
-  <Default_Color_08>62,106,72</Default_Color_08>
-  <Default_Color_09>73,129,153</Default_Color_09>
-  <Default_Color_10>115,160,220</Default_Color_10>
-  <Default_Color_11>218,176,135</Default_Color_11>
-  <Default_Color_12>170,140,200</Default_Color_12>
-  <Default_Color_13>128,64,106</Default_Color_13>
-  <Default_Color_14>109,109,140</Default_Color_14>
-  <Default_Color_15>144,117,89</Default_Color_15>
-  <Default_Color_16>40,60,90</Default_Color_16>
+  <Default_Color_01>60,90,120</Default_Color_01>
+  <Default_Color_02>80,130,150</Default_Color_02>
+  <Default_Color_03>120,110,140</Default_Color_03>
+  <Default_Color_04>160,140,90</Default_Color_04>
+  <Default_Color_05>130,80,110</Default_Color_05>
+  <Default_Color_06>70,100,120</Default_Color_06>
+  <Default_Color_07>110,80,120</Default_Color_07>
+  <Default_Color_08>45,75,55</Default_Color_08>
+  <Default_Color_09>55,90,110</Default_Color_09>
+  <Default_Color_10>80,110,150</Default_Color_10>
+  <Default_Color_11>150,130,100</Default_Color_11>
+  <Default_Color_12>120,100,140</Default_Color_12>
+  <Default_Color_13>90,45,75</Default_Color_13>
+  <Default_Color_14>80,80,100</Default_Color_14>
+  <Default_Color_15>100,80,65</Default_Color_15>
+  <Default_Color_16>30,45,65</Default_Color_16>
   <ButtonBevalAmount>1.05999994</ButtonBevalAmount>
   <BodyBevalAmount>1.05999994</BodyBevalAmount>
   <ContrastAdjustment>0.0</ContrastAdjustment>

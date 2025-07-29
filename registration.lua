@@ -266,6 +266,11 @@ function M.register_menu_and_keybindings(handlers)
     name = "Pattern Editor:Halve Pattern Length",
     invoke = handlers.halve_pattern_length
   }
+
+  renoise.tool():add_menu_entry{
+    name = "Pattern Matrix:Color Selected Pattern Slots",
+    invoke = handlers.color_selected_pattern_slots
+  }
 end
 
 return M 
