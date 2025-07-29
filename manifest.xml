@@ -96,6 +96,10 @@
         <Path>Pattern Editor:Tools:Jump To Previous Collapsed Track</Path>
         <Invoke>jump_to_previous_collapsed_track</Invoke>
       </Binding>
+      <Binding>
+        <Path>Pattern Editor:Tools:Change LPB</Path>
+        <Invoke>change_lpb</Invoke>
+      </Binding>
     </Bindings>
   </KeyBindings>
 </RenoiseScriptingTool>

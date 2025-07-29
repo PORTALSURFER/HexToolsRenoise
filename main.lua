@@ -158,6 +158,10 @@ local function halve_pattern_length()
   pattern_utils.halve_pattern_length()
 end
 
+local function change_lpb()
+  pattern_utils.change_lpb()
+end
+
 registration.register_menu_and_keybindings({
   show_hello = show_hello,
   render_selection_to_new_track = render_selection_to_new_track,
@@ -188,7 +192,8 @@ registration.register_menu_and_keybindings({
   toggle_auto_collapse_before_jump = toggle_auto_collapse_before_jump,
   toggle_auto_collapse_on_focus_loss = toggle_auto_collapse_on_focus_loss,
   double_pattern_length = double_pattern_length,
-  halve_pattern_length = halve_pattern_length
+  halve_pattern_length = halve_pattern_length,
+  change_lpb = change_lpb
 })
 
 -- Initialize track selection notifier after script is loaded

@@ -87,7 +87,7 @@ local last_jumped_track_was_empty  = nil
 local auto_collapse_on_focus_loss  = true  -- new setting
 
 -- colours
-local active_track_color    = {61, 111, 202}
+local active_track_color    = {85, 128, 170}
 local collapsed_track_color = {100, 100, 100}
 local previous_colors       = {}
 
@@ -260,7 +260,7 @@ local function uncollapse_and_select(i)
   if not previous_colors[i] then
     previous_colors[i] = {track.color[1], track.color[2], track.color[3]}
   end
-  track.color           = {255, 255, 255} -- highlight
+  track.color           = {174, 70, 90} -- highlight (red tint)
   song.selected_track_index = i
 
   last_jumped_track         = i
