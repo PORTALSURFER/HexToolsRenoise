@@ -1,63 +1,10 @@
 local M = {}
 
 function M.register_menu_and_keybindings(handlers)
+  -- Development/Debug Tools
   renoise.tool():add_menu_entry{
     name = "Main Menu:Tools:HexTools:Show Hello",
     invoke = handlers.show_hello
-  }
-
-  renoise.tool():add_menu_entry{
-    name = "Main Menu:Tools:HexTools:Render Selection To New Track",
-    invoke = handlers.render_selection_to_new_track
-  }
-
-  renoise.tool():add_menu_entry{
-    name = "Main Menu:Tools:HexTools:Render Selection To New Track Destructive",
-    invoke = handlers.render_selection_to_new_track_destructive
-  }
-
-  renoise.tool():add_menu_entry{
-    name = "Main Menu:Tools:HexTools:Set Playhead Buffer",
-    invoke = handlers.set_playhead_buffer
-  }
-  renoise.tool():add_menu_entry{
-    name = "Main Menu:Tools:HexTools:Play From Buffer",
-    invoke = handlers.play_from_buffer
-  }
-
-  renoise.tool():add_menu_entry{
-    name = "Main Menu:Tools:HexTools:Jump To Test Position",
-    invoke = handlers.jump_to_test_position
-  }
-
-  renoise.tool():add_menu_entry{
-    name = "Main Menu:Tools:HexTools:Render Selection To Next Track",
-    invoke = handlers.render_selection_to_next_track
-  }
-
-  renoise.tool():add_menu_entry{
-    name = "Main Menu:Tools:HexTools:Render Selection To Next Track Destructive",
-    invoke = handlers.render_selection_to_next_track_destructive
-  }
-
-  renoise.tool():add_menu_entry{
-    name = "Main Menu:Tools:HexTools:Sample And Merge Track Notes",
-    invoke = handlers.sample_and_merge_track_notes
-  }
-
-  renoise.tool():add_menu_entry{
-    name = "Main Menu:Tools:HexTools:Find Duplicate Single-Sample Instruments",
-    invoke = handlers.find_duplicate_single_sample_instruments
-  }
-
-  renoise.tool():add_menu_entry{
-    name = "Main Menu:Tools:HexTools:Merge Instruments",
-    invoke = handlers.prompt_and_merge_instruments
-  }
-
-  renoise.tool():add_menu_entry{
-    name = "Main Menu:Tools:HexTools:Remap Instruments",
-    invoke = handlers.prompt_and_remap_instruments
   }
 
   renoise.tool():add_menu_entry{
@@ -65,71 +12,127 @@ function M.register_menu_and_keybindings(handlers)
     invoke = handlers.export_keybindings_md
   }
 
+  -- Playback & Navigation
   renoise.tool():add_menu_entry{
-    name = "Main Menu:Tools:HexTools:Collapse Unused Tracks in Pattern",
-    invoke = handlers.collapse_unused_tracks_in_pattern
+    name = "--- Main Menu:Tools:HexTools:Set Playhead Buffer",
+    invoke = handlers.set_playhead_buffer
+  }
+  renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Play From Buffer",
+    invoke = handlers.play_from_buffer
+  }
+  renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Jump To Test Position",
+    invoke = handlers.jump_to_test_position
   }
 
+  -- Track Management
+  renoise.tool():add_menu_entry{
+    name = "--- Main Menu:Tools:HexTools:Collapse Unused Tracks in Pattern",
+    invoke = handlers.collapse_unused_tracks_in_pattern
+  }
+  renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Remove Empty Tracks",
+    invoke = handlers.remove_empty_tracks
+  }
   renoise.tool():add_menu_entry{
     name = "Main Menu:Tools:HexTools:Jump To Next Track (Skip Collapsed)",
     invoke = handlers.jump_to_next_track
   }
-
   renoise.tool():add_menu_entry{
     name = "Main Menu:Tools:HexTools:Jump To Previous Track (Skip Collapsed)",
     invoke = handlers.jump_to_previous_track
   }
-
-  renoise.tool():add_menu_entry{
-    name = "Main Menu:Tools:HexTools:Toggle Auto-Collapse Before Jump",
-    invoke = handlers.toggle_auto_collapse_before_jump
-  }
-
   renoise.tool():add_menu_entry{
     name = "Main Menu:Tools:HexTools:Jump To Next Collapsed Track",
     invoke = handlers.jump_to_next_collapsed_track
   }
-
   renoise.tool():add_menu_entry{
     name = "Main Menu:Tools:HexTools:Jump To Previous Collapsed Track",
     invoke = handlers.jump_to_previous_collapsed_track
   }
-
   renoise.tool():add_menu_entry{
-    name = "Instrument Box:Remap Selected Notes to This",
-    invoke = handlers.remap_selected_notes_to_this
+    name = "Main Menu:Tools:HexTools:Toggle Auto-Collapse Before Jump",
+    invoke = handlers.toggle_auto_collapse_before_jump
   }
-
   renoise.tool():add_menu_entry{
     name = "Main Menu:Tools:HexTools:Toggle Auto-Collapse On Focus Loss",
     invoke = handlers.toggle_auto_collapse_on_focus_loss
   }
 
+  -- Rendering & Audio
   renoise.tool():add_menu_entry{
-    name = "Main Menu:Tools:HexTools:Double Pattern Length",
-    invoke = handlers.double_pattern_length
+    name = "--- Main Menu:Tools:HexTools:Render Selection To New Track",
+    invoke = handlers.render_selection_to_new_track
+  }
+  renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Render Selection To New Track Destructive",
+    invoke = handlers.render_selection_to_new_track_destructive
+  }
+  renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Render Selection To Next Track",
+    invoke = handlers.render_selection_to_next_track
+  }
+  renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Render Selection To Next Track Destructive",
+    invoke = handlers.render_selection_to_next_track_destructive
+  }
+  renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Sample And Merge Track Notes",
+    invoke = handlers.sample_and_merge_track_notes
   }
 
+  -- Instrument Management
+  renoise.tool():add_menu_entry{
+    name = "--- Main Menu:Tools:HexTools:Find Duplicate Single-Sample Instruments",
+    invoke = handlers.find_duplicate_single_sample_instruments
+  }
+  renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Merge Instruments",
+    invoke = handlers.prompt_and_merge_instruments
+  }
+  renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Remap Instruments",
+    invoke = handlers.prompt_and_remap_instruments
+  }
+  renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Remap Selected Notes to This",
+    invoke = handlers.remap_selected_notes_to_this
+  }
+
+  -- Pattern Management
+  renoise.tool():add_menu_entry{
+    name = "--- Main Menu:Tools:HexTools:Double Pattern Length",
+    invoke = handlers.double_pattern_length
+  }
   renoise.tool():add_menu_entry{
     name = "Main Menu:Tools:HexTools:Halve Pattern Length",
     invoke = handlers.halve_pattern_length
   }
-
   renoise.tool():add_menu_entry{
     name = "Main Menu:Tools:HexTools:Change LPB",
     invoke = handlers.change_lpb
   }
-
   renoise.tool():add_menu_entry{
     name = "Main Menu:Tools:HexTools:Color Selected Pattern Slots",
     invoke = handlers.color_selected_pattern_slots
   }
 
+  -- Automation Tools
   renoise.tool():add_menu_entry{
-    name = "Main Menu:Tools:HexTools:Remove Empty Tracks",
-    invoke = handlers.remove_empty_tracks
+    name = "--- Main Menu:Tools:HexTools:Focus Automation Editor for Selection",
+    invoke = handlers.focus_automation_editor_for_selection
+  }
+  renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Convert Automation To Pattern",
+    invoke = handlers.convert_automation_to_pattern
+  }
+  renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Convert Pattern To Automation",
+    invoke = handlers.convert_pattern_to_automation
   }
 
+  -- Keybindings (Pattern Editor)
   renoise.tool():add_keybinding {
     name = "Pattern Editor:Tools:Set Playhead Buffer",
     invoke = handlers.set_playhead_buffer
@@ -226,12 +229,10 @@ function M.register_menu_and_keybindings(handlers)
     name = "Pattern Editor:Tools:Toggle Auto-Collapse On Focus Loss",
     invoke = handlers.toggle_auto_collapse_on_focus_loss
   }
-
   renoise.tool():add_keybinding {
     name = "Pattern Editor:Tools:Double Pattern Length",
     invoke = handlers.double_pattern_length
   }
-
   renoise.tool():add_keybinding {
     name = "Pattern Editor:Tools:Halve Pattern Length",
     invoke = handlers.halve_pattern_length
@@ -248,6 +249,8 @@ function M.register_menu_and_keybindings(handlers)
     name = "Pattern Editor:Tools:Remove Empty Tracks",
     invoke = handlers.remove_empty_tracks
   }
+
+  -- Pattern Editor Menu Entries
   renoise.tool():add_menu_entry{
     name = "Pattern Editor:Focus Automation Editor for Selection",
     invoke = handlers.focus_automation_editor_for_selection
@@ -260,25 +263,27 @@ function M.register_menu_and_keybindings(handlers)
     name = "Pattern Editor:Convert Pattern To Automation",
     invoke = handlers.convert_pattern_to_automation
   }
-
   renoise.tool():add_menu_entry{
     name = "--- Pattern Editor:Sample And Merge Track Notes",
     invoke = handlers.sample_and_merge_track_notes
   }
-
   renoise.tool():add_menu_entry{
     name = "--- Pattern Editor:Double Pattern Length",
     invoke = handlers.double_pattern_length
   }
-
   renoise.tool():add_menu_entry{
     name = "Pattern Editor:Halve Pattern Length",
     invoke = handlers.halve_pattern_length
   }
-
   renoise.tool():add_menu_entry{
     name = "Pattern Matrix:Color Selected Pattern Slots",
     invoke = handlers.color_selected_pattern_slots
+  }
+
+  -- Instrument Box Menu Entry
+  renoise.tool():add_menu_entry{
+    name = "Instrument Box:Remap Selected Notes to This",
+    invoke = handlers.remap_selected_notes_to_this
   }
 end
 
