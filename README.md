@@ -1,12 +1,12 @@
 # HexTools for Renoise
 
 **Author:** Hex  
-**Version:** v0.2.0  
-**Latest Release:** [v0.2.0](https://github.com/hex/HexTools/releases/tag/v0.2.0)
+**Version:** v0.3.0  
+**Latest Release:** [v0.3.0](https://github.com/hex/HexTools/releases/tag/v0.3.0)
 
 Collection of useful tools for the Renoise digital audio workstation.
 
-## Recent Updates (v0.2.0)
+## Recent Updates (v0.3.0)
 
 ### **New Features**
 - **Pattern Matrix Slot Coloring**: Color selected pattern matrix grid slots with random theme colors
