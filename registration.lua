@@ -125,6 +125,11 @@ function M.register_menu_and_keybindings(handlers)
     invoke = handlers.color_selected_pattern_slots
   }
 
+  renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Remove Empty Tracks",
+    invoke = handlers.remove_empty_tracks
+  }
+
   renoise.tool():add_keybinding {
     name = "Pattern Editor:Tools:Set Playhead Buffer",
     invoke = handlers.set_playhead_buffer
@@ -238,6 +243,10 @@ function M.register_menu_and_keybindings(handlers)
   renoise.tool():add_keybinding {
     name = "Pattern Editor:Tools:Color Selected Pattern Slots",
     invoke = handlers.color_selected_pattern_slots
+  }
+  renoise.tool():add_keybinding {
+    name = "Pattern Editor:Tools:Remove Empty Tracks",
+    invoke = handlers.remove_empty_tracks
   }
   renoise.tool():add_menu_entry{
     name = "Pattern Editor:Focus Automation Editor for Selection",

@@ -241,6 +241,10 @@ local function color_selected_pattern_slots()
     colored_slots, random_color[1], random_color[2], random_color[3]))
 end
 
+local function remove_empty_tracks()
+  utils.remove_empty_tracks()
+end
+
 registration.register_menu_and_keybindings({
   show_hello = show_hello,
   render_selection_to_new_track = render_selection_to_new_track,
@@ -273,7 +277,8 @@ registration.register_menu_and_keybindings({
   double_pattern_length = double_pattern_length,
   halve_pattern_length = halve_pattern_length,
   change_lpb = change_lpb,
-  color_selected_pattern_slots = color_selected_pattern_slots
+  color_selected_pattern_slots = color_selected_pattern_slots,
+  remove_empty_tracks = remove_empty_tracks
 })
 
 -- Initialize track selection notifier after script is loaded
