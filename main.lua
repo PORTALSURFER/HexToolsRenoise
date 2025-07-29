@@ -162,6 +162,85 @@ local function change_lpb()
   pattern_utils.change_lpb()
 end
 
+local function color_selected_pattern_slots()
+  local song = renoise.song()
+  local sequencer = song.sequencer
+  
+  -- Get the current theme's default colors
+  local theme = renoise.app().theme
+  local default_colors = {}
+  
+  -- Extract the default colors from the theme (default_color_01 through default_color_16)
+  for i = 1, 16 do
+    local color_name = string.format("default_color_%02d", i)
+    local color = theme:color(color_name)
+    if color then
+      table.insert(default_colors, {color[1], color[2], color[3]})
+    end
+  end
+  
+  -- Fallback to some basic colors if theme colors aren't available
+  if #default_colors == 0 then
+    default_colors = {
+      {255, 255, 255}, -- white
+      {255, 0, 0},     -- red
+      {0, 255, 0},     -- green
+      {0, 0, 255},     -- blue
+      {255, 255, 0},   -- yellow
+      {255, 0, 255},   -- magenta
+      {0, 255, 255},   -- cyan
+      {255, 128, 0},   -- orange
+      {128, 0, 255},   -- purple
+      {0, 255, 128},   -- light green
+      {255, 128, 128}, -- light red
+      {128, 255, 128}, -- light green
+      {128, 128, 255}, -- light blue
+      {255, 200, 0},   -- gold
+      {200, 100, 0},   -- brown
+      {128, 128, 128}  -- gray
+    }
+  end
+  
+  -- Get the pattern matrix grid selection
+  local selected_slots = {}
+  
+  -- Check each sequence and track for selected slots in the pattern matrix
+  for seq_idx = 1, #sequencer.pattern_sequence do
+    for track_idx = 1, #song.tracks do
+      if sequencer:track_sequence_slot_is_selected(track_idx, seq_idx) then
+        table.insert(selected_slots, {track = track_idx, sequence = seq_idx})
+      end
+    end
+  end
+  
+  if #selected_slots == 0 then
+    renoise.app():show_status("No pattern matrix grid slots selected")
+    return
+  end
+  
+  -- Debug output
+  renoise.app():show_status(string.format("Found %d selected pattern matrix grid slots", #selected_slots))
+  
+  -- Color each selected pattern matrix grid slot
+  local colored_slots = 0
+  local random_color = default_colors[math.random(#default_colors)]
+  
+  for _, slot in ipairs(selected_slots) do
+    local pattern_index = sequencer:pattern(slot.sequence)
+    local pattern = song:pattern(pattern_index)
+    if pattern then
+      local track = pattern:track(slot.track)
+      if track then
+        track.color = random_color
+        colored_slots = colored_slots + 1
+      end
+    end
+  end
+  
+  renoise.app():show_status(string.format("Colored %d pattern matrix grid slots with color {%d, %d, %d}", 
+    colored_slots, random_color[1], random_color[2], random_color[3]))
+end
+
 registration.register_menu_and_keybindings({
   show_hello = show_hello,
   render_selection_to_new_track = render_selection_to_new_track,
@@ -193,7 +272,8 @@ registration.register_menu_and_keybindings({
   toggle_auto_collapse_on_focus_loss = toggle_auto_collapse_on_focus_loss,
   double_pattern_length = double_pattern_length,
   halve_pattern_length = halve_pattern_length,
-  change_lpb = change_lpb
+  change_lpb = change_lpb,
+  color_selected_pattern_slots = color_selected_pattern_slots
 })
 
 -- Initialize track selection notifier after script is loaded
