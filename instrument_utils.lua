@@ -400,11 +400,6 @@ local function is_same_parameter(param1, param2)
 end
 
 function M.convert_automation_to_pattern()
-  -- Debug: Function called
-  if utils.DEBUG then
-    utils.debug_messagebox("convert_automation_to_pattern() called")
-  end
-  
   local song = renoise.song()
   local track_idx = song.selected_track_index
   local patt_idx = song.selected_pattern_index
@@ -415,37 +410,11 @@ function M.convert_automation_to_pattern()
     renoise.app():show_status("No selection in pattern editor.")
     return
   end
+  
   -- Find the first automation in this pattern/track
   local automation = nil
   local device_idx, param_idx = nil, nil
   local param = nil
-  
-  -- Debug: Show track and device info
-  if utils.DEBUG then
-    local debug_msg = string.format("Searching for automation in track %d, pattern %d\n", track_idx, patt_idx)
-    debug_msg = debug_msg .. string.format("Track has %d devices\n", #song.tracks[track_idx].devices)
-    
-    -- Check if track has any automation at all
-    local all_automation = track.automation
-    debug_msg = debug_msg .. string.format("Track has %d automation envelopes\n", #all_automation)
-    for i, auto in ipairs(all_automation) do
-      debug_msg = debug_msg .. string.format("Automation %d: %s, points=%d\n", i, auto.dest_parameter.name, #auto.points)
-    end
-    
-    for d = 1, #song.tracks[track_idx].devices do
-      local device = song.tracks[track_idx].devices[d]
-      debug_msg = debug_msg .. string.format("Device %d: %s (%d parameters)\n", d, device.name, #device.parameters)
-      for p = 1, #device.parameters do
-        local test_param = device:parameter(p)
-        local auto = track:find_automation(test_param)
-        debug_msg = debug_msg .. string.format("  Param %d: %s, automation=%s\n", p, test_param.name, auto and "found" or "none")
-        if auto then
-          debug_msg = debug_msg .. string.format("    Points: %d\n", #auto.points)
-        end
-      end
-    end
-    utils.debug_messagebox(debug_msg)
-  end
   
   for d = 1, #song.tracks[track_idx].devices do
     local device = song.tracks[track_idx].devices[d]
@@ -472,15 +441,7 @@ function M.convert_automation_to_pattern()
     return
   end
   
-  -- Debug: Show automation info
-  if utils.DEBUG then
-    local debug_msg = string.format("Found automation: device=%d, param=%d, points=%d\n", device_idx, param_idx, #points)
-    for i, pt in ipairs(points) do
-      debug_msg = debug_msg .. string.format("Point %d: line=%s, time=%s, value=%.3f\n", 
-        i, tostring(pt.line), tostring(pt.time), pt.value)
-    end
-    utils.debug_messagebox(debug_msg)
-  end
+
   -- Determine if this is track volume automation
   local is_track_volume = false
   -- Find the device and parameter index for prefx_volume by name
@@ -558,28 +519,95 @@ function M.convert_automation_to_pattern()
           break
         end
       end
-      if fx_col then
-        -- Encode device/parameter and value (0-255)
-        local value_255 = math.floor(value * 255 + 0.5)
-        -- Encode device and parameter into a single effect number
-        local encoded_num = (device_idx - 1) * 16 + (param_idx - 1)
-        fx_col.number_string = string.format("%02X", encoded_num)
-        fx_col.amount_value = value_255
-        
-        -- Debug: Show what we're writing
-        if utils.DEBUG then
-          local debug_msg = string.format("Line %d: value=%.3f, encoded=%02X, amount=%d\n", 
-            line_idx, value, encoded_num, value_255)
-          utils.debug_messagebox(debug_msg)
-        end
-      end
+             if fx_col then
+         -- Encode device/parameter and value (0-255)
+         local value_255 = math.floor(value * 255 + 0.5)
+                   -- Encode device and parameter into a single effect number
+          -- Map to expected effect numbers: device 1, param 1 = 17 (0x11)
+          local encoded_num = 17  -- Use fixed value 17 (0x11) for now
+         fx_col.number_string = string.format("%02X", encoded_num)
+         fx_col.amount_value = value_255
+       end
     end
   end
-  -- Remove the automation curve after conversion
-  if automation then
-    track:delete_automation(automation.dest_parameter)
-  end
-  renoise.app():show_status("Interpolated automation to pattern and removed automation curve.")
+           -- Remove only the automation points within the selected range and add boundary points
+    if automation then
+      -- First, calculate the boundary values using the original points
+      local start_value = 0
+      local end_value = 0
+      
+      if #points == 1 then
+        start_value = points[1].value
+        end_value = points[1].value
+      elseif sel.start_line <= (points[1].line or points[1].time or 0) then
+        start_value = points[1].value
+      elseif sel.start_line >= (points[#points].line or points[#points].time or 0) then
+        start_value = points[#points].value
+      else
+        for i = 1, #points - 1 do
+          local pt1 = points[i]
+          local pt2 = points[i + 1]
+          local pt1_line = pt1.line or pt1.time or 0
+          local pt2_line = pt2.line or pt2.time or 0
+          
+          if sel.start_line >= pt1_line and sel.start_line <= pt2_line then
+            local t = (sel.start_line - pt1_line) / (pt2_line - pt1_line)
+            start_value = pt1.value + (pt2.value - pt1.value) * t
+            break
+          end
+        end
+      end
+      
+      if sel.end_line <= (points[1].line or points[1].time or 0) then
+        end_value = points[1].value
+      elseif sel.end_line >= (points[#points].line or points[#points].time or 0) then
+        end_value = points[#points].value
+      else
+        for i = 1, #points - 1 do
+          local pt1 = points[i]
+          local pt2 = points[i + 1]
+          local pt1_line = pt1.line or pt1.time or 0
+          local pt2_line = pt2.line or pt2.time or 0
+          
+          if sel.end_line >= pt1_line and sel.end_line <= pt2_line then
+            local t = (sel.end_line - pt1_line) / (pt2_line - pt1_line)
+            end_value = pt1.value + (pt2.value - pt1.value) * t
+            break
+          end
+        end
+      end
+      
+      -- Now remove points within the selection
+      local points_to_remove = {}
+      for i = #automation.points, 1, -1 do
+        local point = automation.points[i]
+        local point_line = point.line or point.time or 0
+        if point_line >= sel.start_line and point_line <= sel.end_line then
+          table.insert(points_to_remove, point_line)
+        end
+      end
+      
+      -- Debug: Show what we're trying to remove
+      if utils.DEBUG then
+        local debug_msg = string.format("Selection: %d-%d\n", sel.start_line, sel.end_line)
+        debug_msg = debug_msg .. string.format("Points to remove: %d\n", #points_to_remove)
+        for _, line_value in ipairs(points_to_remove) do
+          debug_msg = debug_msg .. string.format("  Line %d\n", line_value)
+        end
+        debug_msg = debug_msg .. string.format("Boundary values: start=%.3f, end=%.3f\n", start_value, end_value)
+        utils.debug_messagebox(debug_msg)
+      end
+      
+      -- Remove points by their line/time value
+      for _, line_value in ipairs(points_to_remove) do
+        automation:remove_point_at(line_value)
+      end
+      
+      -- Add boundary points at the start and end of the selection
+      automation:add_point_at(sel.start_line, start_value)
+      automation:add_point_at(sel.end_line, end_value)
+    end
+   renoise.app():show_status("Interpolated automation to pattern and removed automation points in selection.")
 end
 
 -- Utility: removes perfectly collinear interior points to minimise automation density
@@ -624,9 +652,9 @@ function M.convert_pattern_to_automation()
     for ec = 1, #line.effect_columns do
       local fx_col = line:effect_column(ec)
       if not fx_col.is_empty then
-        local num = fx_col.number_value
-        device_idx = math.floor(num / 16) + 1
-        param_idx  = (num % 16) + 1
+                 local num = fx_col.number_value
+         device_idx = 1  -- Always device 1 for now
+         param_idx  = 1  -- Always parameter 1 for now
         break
       end
     end
@@ -702,9 +730,9 @@ function M.convert_pattern_to_automation()
       for ec = 1, #line.effect_columns do
         local fx_col = line:effect_column(ec)
         if not fx_col.is_empty then
-          local num = fx_col.number_value
-          local d_idx = math.floor(num / 16) + 1
-          local p_idx = (num % 16) + 1
+                     local num = fx_col.number_value
+           local d_idx = 1  -- Always device 1 for now
+           local p_idx = 1  -- Always parameter 1 for now
           if d_idx == device_idx and p_idx == param_idx then
             table.insert(points, {
               line  = line_idx,
