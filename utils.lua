@@ -79,59 +79,96 @@ M.export_keybindings_md = export_keybindings_md
 -- state
 ----------------------------------------------------------------------
 local last_collapsed_pattern_idx   = nil
-local reorder_collapsed_tracks     = false
+local reorder_null_tracks          = false
 local auto_collapse_before_jump    = true
 local pattern_collapsed_state      = {}
 local last_jumped_track            = nil
-local last_jumped_track_was_empty  = nil
-local auto_collapse_on_focus_loss  = true  -- new setting
+local last_jumped_track_was_null   = nil
+local auto_collapse_on_focus_loss  = true
 
--- colours
-local active_track_color    = {85, 128, 170}
-local collapsed_track_color = {100, 100, 100}
-local previous_colors       = {}
+-- track colors and states
+local active_track_color     = {85, 128, 170}  -- blue for active tracks
+local null_track_color       = {100, 100, 100} -- gray for null/empty tracks
+local focused_track_color    = {174, 70, 90}   -- red tint for focused tracks
+local previous_colors        = {}
+
+----------------------------------------------------------------------
+-- track state helpers
+----------------------------------------------------------------------
+local function is_track_active(track_idx)
+  local song = renoise.song()
+  return not song:pattern(song.selected_pattern_index):track(track_idx).is_empty
+end
+
+local function is_track_null(track_idx)
+  return not is_track_active(track_idx)
+end
+
+local function is_track_collapsed(track_idx)
+  local song = renoise.song()
+  return song.tracks[track_idx].collapsed
+end
+
+local function set_track_state(track_idx, is_active)
+  local song = renoise.song()
+  local track = song.tracks[track_idx]
+  
+  if track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
+    track.collapsed = not is_active
+    track.color = is_active and active_track_color or null_track_color
+  end
+end
+
+local function set_track_focused(track_idx)
+  local song = renoise.song()
+  local track = song.tracks[track_idx]
+  
+  if track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
+    track.collapsed = false
+    if not previous_colors[track_idx] then
+      previous_colors[track_idx] = {track.color[1], track.color[2], track.color[3]}
+    end
+    track.color = focused_track_color
+  end
+end
 
 ----------------------------------------------------------------------
 -- collapse / expand helpers
 ----------------------------------------------------------------------
-local function collapse_unused_tracks_in_pattern()
+local function collapse_null_tracks_in_pattern()
   local song      = renoise.song()
   local patt_idx  = song.selected_pattern_index
   local pattern   = song:pattern(patt_idx)
 
-  -- (1) first time on this pattern  → collapse unused
+  -- (1) first time on this pattern  → collapse null tracks
   -- (2) subsequent call             → toggle
   local initial_call = (last_collapsed_pattern_idx ~= patt_idx)
 
   local function apply_state(expand)
-    local collapsed_indices, expanded_indices = {}, {}
+    local null_track_indices, active_track_indices = {}, {}
     for t = 1, #song.tracks do
       local track = song.tracks[t]
       if track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
-        local has_notes = not pattern:track(t).is_empty
-        track.collapsed = expand and false or not has_notes
-        if has_notes then
-          table.insert(expanded_indices, t)
+        local is_active = is_track_active(t)
+        set_track_state(t, expand and true or is_active)
+        
+        if is_active then
+          table.insert(active_track_indices, t)
         else
-          table.insert(collapsed_indices, t)
+          table.insert(null_track_indices, t)
         end
-        -- save original colour once
-        if not previous_colors[t] then
-          previous_colors[t] = {track.color[1], track.color[2], track.color[3]}
-        end
-        track.color = track.collapsed and collapsed_track_color or active_track_color
       end
     end
 
-    if reorder_collapsed_tracks then
+    if reorder_null_tracks then
       local last_seq = 0
       for t = #song.tracks, 1, -1 do
         if song.tracks[t].type == renoise.Track.TRACK_TYPE_SEQUENCER then
           last_seq = t; break
         end
       end
-      for i = #collapsed_indices, 1, -1 do
-        local idx = collapsed_indices[i]
+      for i = #null_track_indices, 1, -1 do
+        local idx = null_track_indices[i]
         if idx < last_seq then
           song:swap_tracks_at(idx, last_seq); last_seq = last_seq - 1
         end
@@ -142,65 +179,59 @@ local function collapse_unused_tracks_in_pattern()
 
   if initial_call then
     apply_state(false)
-    renoise.app():show_status("Collapsed unused tracks.")
+    renoise.app():show_status("Collapsed null tracks.")
   else
     local currently_collapsed = pattern_collapsed_state[patt_idx]
     apply_state(currently_collapsed) -- toggle
     renoise.app():show_status(currently_collapsed and "Expanded all tracks."
-                                              or  "Collapsed unused tracks.")
+                                              or  "Collapsed null tracks.")
   end
   last_collapsed_pattern_idx = patt_idx
 end
-M.collapse_unused_tracks_in_pattern = collapse_unused_tracks_in_pattern
+M.collapse_unused_tracks_in_pattern = collapse_null_tracks_in_pattern
 
 local function is_pattern_collapsed()
   return pattern_collapsed_state[renoise.song().selected_pattern_index] == true
 end
 
-local function track_has_notes(idx)
-  local s   = renoise.song()
-  return not s:pattern(s.selected_pattern_index):track(idx).is_empty
-end
-
 ----------------------------------------------------------------------
--- leave‑track housekeeping
+-- track focus management
 ----------------------------------------------------------------------
-local function handle_leaving_jumped_track()
+local function handle_leaving_focused_track()
   if not last_jumped_track then return end
 
   local song  = renoise.song()
   local track = song.tracks[last_jumped_track]
   if track and track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
-    if track_has_notes(last_jumped_track) then
+    if is_track_active(last_jumped_track) then
       track.color = active_track_color
     else
-      track.collapsed = true
-      track.color     = collapsed_track_color
+      set_track_state(last_jumped_track, false) -- collapse as null track
     end
   end
-  last_jumped_track, last_jumped_track_was_empty = nil, nil
+  last_jumped_track, last_jumped_track_was_null = nil, nil
 end
-M.handle_leaving_jumped_track = handle_leaving_jumped_track
+M.handle_leaving_jumped_track = handle_leaving_focused_track
 
 ----------------------------------------------------------------------
--- non‑collapsed navigation
+-- active track navigation
 ----------------------------------------------------------------------
-local function jump_to_next_track()
+local function jump_to_next_active_track()
   local song = renoise.song()
   if auto_collapse_before_jump and not is_pattern_collapsed() then
-    collapse_unused_tracks_in_pattern()
+    collapse_null_tracks_in_pattern()
   end
 
   local cur  = song.selected_track_index
   local tot  = #song.tracks
 
   if last_jumped_track and last_jumped_track == cur then
-    handle_leaving_jumped_track()
+    handle_leaving_focused_track()
   end
 
   for i = cur + 1, tot do
     local tr = song.tracks[i]
-    if tr.type == renoise.Track.TRACK_TYPE_SEQUENCER and not tr.collapsed then
+    if tr.type == renoise.Track.TRACK_TYPE_SEQUENCER and not is_track_collapsed(i) then
       song.selected_track_index = i
       pattern_collapsed_state[song.selected_pattern_index] = false
       return
@@ -208,7 +239,7 @@ local function jump_to_next_track()
   end
   for i = 1, cur - 1 do
     local tr = song.tracks[i]
-    if tr.type == renoise.Track.TRACK_TYPE_SEQUENCER and not tr.collapsed then
+    if tr.type == renoise.Track.TRACK_TYPE_SEQUENCER and not is_track_collapsed(i) then
       song.selected_track_index = i
       pattern_collapsed_state[song.selected_pattern_index] = false
       return
@@ -216,22 +247,22 @@ local function jump_to_next_track()
   end
 end
 
-local function jump_to_previous_track()
+local function jump_to_previous_active_track()
   local song = renoise.song()
   if auto_collapse_before_jump and not is_pattern_collapsed() then
-    collapse_unused_tracks_in_pattern()
+    collapse_null_tracks_in_pattern()
   end
 
   local cur = song.selected_track_index
   local tot = #song.tracks
 
   if last_jumped_track and last_jumped_track == cur then
-    handle_leaving_jumped_track()
+    handle_leaving_focused_track()
   end
 
   for i = cur - 1, 1, -1 do
     local tr = song.tracks[i]
-    if tr.type == renoise.Track.TRACK_TYPE_SEQUENCER and not tr.collapsed then
+    if tr.type == renoise.Track.TRACK_TYPE_SEQUENCER and not is_track_collapsed(i) then
       song.selected_track_index = i
       pattern_collapsed_state[song.selected_pattern_index] = false
       return
@@ -239,84 +270,88 @@ local function jump_to_previous_track()
   end
   for i = tot, cur + 1, -1 do
     local tr = song.tracks[i]
-    if tr.type == renoise.Track.TRACK_TYPE_SEQUENCER and not tr.collapsed then
+    if tr.type == renoise.Track.TRACK_TYPE_SEQUENCER and not is_track_collapsed(i) then
       song.selected_track_index = i
       pattern_collapsed_state[song.selected_pattern_index] = false
       return
     end
   end
 end
-M.jump_to_next_track     = jump_to_next_track
-M.jump_to_previous_track = jump_to_previous_track
+M.jump_to_next_track     = jump_to_next_active_track
+M.jump_to_previous_track = jump_to_previous_active_track
 
 ----------------------------------------------------------------------
--- collapsed navigation  (*** fixed ***)
+-- null track navigation
 ----------------------------------------------------------------------
-local function uncollapse_and_select(i)
+local function focus_and_select_track(track_idx)
   local song  = renoise.song()
-  local track = song.tracks[i]
+  local track = song.tracks[track_idx]
 
-  track.collapsed = false
-  if not previous_colors[i] then
-    previous_colors[i] = {track.color[1], track.color[2], track.color[3]}
-  end
-  track.color           = {174, 70, 90} -- highlight (red tint)
-  song.selected_track_index = i
+  set_track_focused(track_idx)
+  song.selected_track_index = track_idx
 
-  last_jumped_track         = i
-  last_jumped_track_was_empty = not track_has_notes(i)
+  last_jumped_track         = track_idx
+  last_jumped_track_was_null = is_track_null(track_idx)
   pattern_collapsed_state[song.selected_pattern_index] = false
 end
 
-local function jump_to_next_collapsed_track()
+local function jump_to_next_null_track()
   local song = renoise.song()
+  if auto_collapse_before_jump and not is_pattern_collapsed() then
+    collapse_null_tracks_in_pattern()
+  end
+
   local cur  = song.selected_track_index
   local tot  = #song.tracks
 
   if last_jumped_track and last_jumped_track == cur then
-    handle_leaving_jumped_track()
+    handle_leaving_focused_track()
   end
 
   for i = cur + 1, tot do
     local tr = song.tracks[i]
-    if tr.type == renoise.Track.TRACK_TYPE_SEQUENCER and tr.collapsed then
-      uncollapse_and_select(i); return
+    if tr.type == renoise.Track.TRACK_TYPE_SEQUENCER and is_track_collapsed(i) then
+      focus_and_select_track(i); return
     end
   end
   for i = 1, cur - 1 do
     local tr = song.tracks[i]
-    if tr.type == renoise.Track.TRACK_TYPE_SEQUENCER and tr.collapsed then
-      uncollapse_and_select(i); return
+    if tr.type == renoise.Track.TRACK_TYPE_SEQUENCER and is_track_collapsed(i) then
+      focus_and_select_track(i); return
     end
   end
-  renoise.app():show_status("No other collapsed tracks found")
+  renoise.app():show_status("No other null tracks found")
 end
 
-local function jump_to_previous_collapsed_track()
+local function jump_to_previous_null_track()
   local song = renoise.song()
+  if auto_collapse_before_jump and not is_pattern_collapsed() then
+    collapse_null_tracks_in_pattern()
+  end
+
   local cur  = song.selected_track_index
   local tot  = #song.tracks
 
   if last_jumped_track and last_jumped_track == cur then
-    handle_leaving_jumped_track()
+    handle_leaving_focused_track()
   end
 
   for i = cur - 1, 1, -1 do
     local tr = song.tracks[i]
-    if tr.type == renoise.Track.TRACK_TYPE_SEQUENCER and tr.collapsed then
-      uncollapse_and_select(i); return
+    if tr.type == renoise.Track.TRACK_TYPE_SEQUENCER and is_track_collapsed(i) then
+      focus_and_select_track(i); return
     end
   end
   for i = tot, cur + 1, -1 do
     local tr = song.tracks[i]
-    if tr.type == renoise.Track.TRACK_TYPE_SEQUENCER and tr.collapsed then
-      uncollapse_and_select(i); return
+    if tr.type == renoise.Track.TRACK_TYPE_SEQUENCER and is_track_collapsed(i) then
+      focus_and_select_track(i); return
     end
   end
-  renoise.app():show_status("No other collapsed tracks found")
+  renoise.app():show_status("No other null tracks found")
 end
-M.jump_to_next_collapsed_track     = jump_to_next_collapsed_track
-M.jump_to_previous_collapsed_track = jump_to_previous_collapsed_track
+M.jump_to_next_collapsed_track     = jump_to_next_null_track
+M.jump_to_previous_collapsed_track = jump_to_previous_null_track
 
 ----------------------------------------------------------------------
 -- focus loss detection and auto-collapse
@@ -333,15 +368,14 @@ local function check_and_auto_collapse_focused_track()
   if current_track ~= last_jumped_track then
     local track = song.tracks[last_jumped_track]
     if track and track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
-      -- Check if the track still has no notes (was empty when we jumped to it)
-      if last_jumped_track_was_empty and not track_has_notes(last_jumped_track) then
-        track.collapsed = true
-        track.color = collapsed_track_color
-      elseif track_has_notes(last_jumped_track) then
+      -- Check if the track still has no notes (was null when we jumped to it)
+      if last_jumped_track_was_null and is_track_null(last_jumped_track) then
+        set_track_state(last_jumped_track, false) -- collapse as null track
+      elseif is_track_active(last_jumped_track) then
         track.color = active_track_color
       end
     end
-    last_jumped_track, last_jumped_track_was_empty = nil, nil
+    last_jumped_track, last_jumped_track_was_null = nil, nil
   end
 end
 
@@ -350,20 +384,20 @@ local function handle_track_focus_change()
   -- First, handle auto-collapse of previously focused track
   check_and_auto_collapse_focused_track()
   
-  -- Then, check if we clicked on a collapsed track
+  -- Then, check if we clicked on a null track
   local song = renoise.song()
   local current_track = song.selected_track_index
   local track = song.tracks[current_track]
   
-  -- If the newly selected track is collapsed, uncollapse it and set focus mode
-  if track and track.type == renoise.Track.TRACK_TYPE_SEQUENCER and track.collapsed then
-    uncollapse_and_select(current_track)
+  -- If the newly selected track is collapsed, focus it and set focus mode
+  if track and track.type == renoise.Track.TRACK_TYPE_SEQUENCER and is_track_collapsed(current_track) then
+    focus_and_select_track(current_track)
   end
 end
 M.handle_track_focus_change = handle_track_focus_change
 
 ----------------------------------------------------------------------
--- misc
+-- settings
 ----------------------------------------------------------------------
 local function toggle_auto_collapse_before_jump()
   auto_collapse_before_jump = not auto_collapse_before_jump
