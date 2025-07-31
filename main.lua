@@ -94,8 +94,8 @@ local function play_from_buffer()
   navigation_utils.play_from_buffer()
 end
 
-local function jump_to_test_position()
-  navigation_utils.jump_to_test_position()
+local function jump_to_buffered_play_line()
+  navigation_utils.jump_to_buffered_play_line()
 end
 
 local function find_duplicate_single_sample_instruments()
@@ -112,6 +112,10 @@ end
 
 local function remap_selected_notes_to_this()
   instrument_utils.remap_selected_notes_to_this()
+end
+
+local function record_selection_to_instrument_sample()
+  instrument_utils.record_selection_to_instrument_sample()
 end
 
 local function focus_automation_editor_for_selection()
@@ -180,6 +184,18 @@ end
 
 local function change_lpb()
   pattern_utils.change_lpb()
+end
+
+local function nudge_note_up()
+  pattern_utils.nudge_note_up()
+end
+
+local function nudge_note_down()
+  pattern_utils.nudge_note_down()
+end
+
+local function expand_selection_to_full_pattern()
+  pattern_utils.expand_selection_to_full_pattern()
 end
 
 local function color_selected_pattern_slots()
@@ -277,11 +293,12 @@ registration.register_menu_and_keybindings({
   sample_and_merge_track_notes = sample_and_merge_track_notes,
   set_playhead_buffer = set_playhead_buffer,
   play_from_buffer = play_from_buffer,
-  jump_to_test_position = jump_to_test_position,
+  jump_to_buffered_play_line = jump_to_buffered_play_line,
   find_duplicate_single_sample_instruments = find_duplicate_single_sample_instruments,
   prompt_and_merge_instruments = prompt_and_merge_instruments,
   prompt_and_remap_instruments = prompt_and_remap_instruments,
   remap_selected_notes_to_this = remap_selected_notes_to_this,
+  record_selection_to_instrument_sample = record_selection_to_instrument_sample,
   increase_velocity = instrument_utils.increase_velocity,
   decrease_velocity = instrument_utils.decrease_velocity,
   increase_velocity_sensitive = instrument_utils.increase_velocity_sensitive,
@@ -302,6 +319,9 @@ registration.register_menu_and_keybindings({
   double_pattern_length = double_pattern_length,
   halve_pattern_length = halve_pattern_length,
   change_lpb = change_lpb,
+  nudge_note_up = nudge_note_up,
+  nudge_note_down = nudge_note_down,
+  expand_selection_to_full_pattern = expand_selection_to_full_pattern,
   color_selected_pattern_slots = color_selected_pattern_slots,
   remove_empty_tracks = remove_empty_tracks
 })

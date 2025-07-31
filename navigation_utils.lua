@@ -131,23 +131,31 @@ function M.play_and_return_toggle()
   end
 end
 
-function M.jump_to_test_position()
+function M.jump_to_buffered_play_line()
   local song = renoise.song()
-  -- Jump to sequence 2 (if it exists), track 1, line 21
-  local seq_idx = math.min(2, #song.sequencer.pattern_sequence)
+  
+  if not play_buffer then
+    renoise.app():show_status("No buffered play position set. Use 'Play From Buffer' first to set a position.")
+    return
+  end
+  
+  -- Jump to the buffered play position
+  local seq_count = #song.sequencer.pattern_sequence
+  local seq_idx = math.min(play_buffer.sequence, seq_count)
   song.selected_sequence_index = seq_idx
 
-  local track_idx = 1
+  local track_count = #song.tracks
+  local track_idx = math.min(play_buffer.track, track_count)
   song.selected_track_index = track_idx
 
   -- Get the pattern index for this sequence position
   local patt_idx = song.sequencer:pattern(seq_idx)
   local patt = song:pattern(patt_idx)
-  local line_idx = math.min(21, patt.number_of_lines)
+  local line_idx = math.min(play_buffer.line, patt.number_of_lines)
   song.selected_line_index = line_idx
 
   renoise.app():show_status(
-    ("[DEBUG] Jumped to sequence %d, track %d, line %d."):
+    ("Jumped to buffered play position: seq=%d, track=%d, line=%d"):
     format(seq_idx, track_idx, line_idx)
   )
 end

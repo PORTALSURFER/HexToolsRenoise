@@ -22,8 +22,8 @@ function M.register_menu_and_keybindings(handlers)
     invoke = handlers.play_from_buffer
   }
   renoise.tool():add_menu_entry{
-    name = "Main Menu:Tools:HexTools:Jump To Test Position",
-    invoke = handlers.jump_to_test_position
+    name = "Main Menu:Tools:HexTools:Jump To Buffered Play Line",
+    invoke = handlers.jump_to_buffered_play_line
   }
 
   -- Track Management
@@ -115,6 +115,10 @@ function M.register_menu_and_keybindings(handlers)
     name = "Main Menu:Tools:HexTools:Remap Selected Notes to This",
     invoke = handlers.remap_selected_notes_to_this
   }
+  renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Record Selection To Instrument Sample",
+    invoke = handlers.record_selection_to_instrument_sample
+  }
 
   -- Pattern Management
   renoise.tool():add_menu_entry{
@@ -128,6 +132,18 @@ function M.register_menu_and_keybindings(handlers)
   renoise.tool():add_menu_entry{
     name = "Main Menu:Tools:HexTools:Change LPB",
     invoke = handlers.change_lpb
+  }
+  renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Nudge Note Up",
+    invoke = handlers.nudge_note_up
+  }
+  renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Nudge Note Down",
+    invoke = handlers.nudge_note_down
+  }
+  renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Expand Selection To Full Pattern",
+    invoke = handlers.expand_selection_to_full_pattern
   }
   renoise.tool():add_menu_entry{
     name = "Main Menu:Tools:HexTools:Color Selected Pattern Slots",
@@ -156,6 +172,10 @@ function M.register_menu_and_keybindings(handlers)
   renoise.tool():add_keybinding {
     name = "Pattern Editor:Tools:Play From Buffer",
     invoke = handlers.play_from_buffer
+  }
+  renoise.tool():add_keybinding {
+    name = "Pattern Editor:Tools:Jump To Buffered Play Line",
+    invoke = handlers.jump_to_buffered_play_line
   }
   renoise.tool():add_keybinding {
     name = "Pattern Editor:Tools:Render Selection To New Track",
@@ -204,6 +224,10 @@ function M.register_menu_and_keybindings(handlers)
   renoise.tool():add_keybinding {
     name = "Pattern Editor:Tools:Remap Instruments",
     invoke = handlers.prompt_and_remap_instruments
+  }
+  renoise.tool():add_keybinding {
+    name = "Pattern Editor:Tools:Record Selection To Instrument Sample",
+    invoke = handlers.record_selection_to_instrument_sample
   }
   renoise.tool():add_keybinding {
     name = "Pattern Editor:Tools:Increase Velocity",
@@ -280,6 +304,18 @@ function M.register_menu_and_keybindings(handlers)
   renoise.tool():add_keybinding {
     name = "Pattern Editor:Tools:Change LPB",
     invoke = handlers.change_lpb
+  }
+  renoise.tool():add_keybinding {
+    name = "Pattern Editor:Tools:Nudge Note Up",
+    invoke = handlers.nudge_note_up
+  }
+  renoise.tool():add_keybinding {
+    name = "Pattern Editor:Tools:Nudge Note Down",
+    invoke = handlers.nudge_note_down
+  }
+  renoise.tool():add_keybinding {
+    name = "Pattern Editor:Tools:Expand Selection To Full Pattern",
+    invoke = handlers.expand_selection_to_full_pattern
   }
   renoise.tool():add_keybinding {
     name = "Pattern Editor:Tools:Color Selected Pattern Slots",
