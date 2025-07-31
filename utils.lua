@@ -475,5 +475,42 @@ end
 
 M.remove_empty_tracks = remove_empty_tracks
 
+-- Function to jump 1/4th up in the current pattern
+local function jump_quarter_up()
+  local song = renoise.song()
+  local pattern = song:pattern(song.selected_pattern_index)
+  local current_line = song.selected_line_index
+  local pattern_length = pattern.number_of_lines
+  local quarter_length = math.floor(pattern_length / 4)
+  
+  local new_line = current_line - quarter_length
+  if new_line < 1 then
+    new_line = 1
+  end
+  
+  song.selected_line_index = new_line
+  renoise.app():show_status(string.format("Jumped 1/4th up: line %d", new_line))
+end
+
+-- Function to jump 1/4th down in the current pattern
+local function jump_quarter_down()
+  local song = renoise.song()
+  local pattern = song:pattern(song.selected_pattern_index)
+  local current_line = song.selected_line_index
+  local pattern_length = pattern.number_of_lines
+  local quarter_length = math.floor(pattern_length / 4)
+  
+  local new_line = current_line + quarter_length
+  if new_line > pattern_length then
+    new_line = pattern_length
+  end
+  
+  song.selected_line_index = new_line
+  renoise.app():show_status(string.format("Jumped 1/4th down: line %d", new_line))
+end
+
+M.jump_quarter_up = jump_quarter_up
+M.jump_quarter_down = jump_quarter_down
+
 return M
 

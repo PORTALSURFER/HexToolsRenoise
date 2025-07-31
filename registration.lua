@@ -52,6 +52,14 @@ function M.register_menu_and_keybindings(handlers)
     invoke = handlers.jump_to_previous_collapsed_track
   }
   renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Jump Quarter Up",
+    invoke = handlers.jump_quarter_up
+  }
+  renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Jump Quarter Down",
+    invoke = handlers.jump_quarter_down
+  }
+  renoise.tool():add_menu_entry{
     name = "Main Menu:Tools:HexTools:Toggle Auto-Collapse Before Jump",
     invoke = handlers.toggle_auto_collapse_before_jump
   }
@@ -76,6 +84,14 @@ function M.register_menu_and_keybindings(handlers)
   renoise.tool():add_menu_entry{
     name = "Main Menu:Tools:HexTools:Render Selection To Next Track Destructive",
     invoke = handlers.render_selection_to_next_track_destructive
+  }
+  renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Render Selection To Copy Buffer",
+    invoke = handlers.render_selection_to_copy_buffer
+  }
+  renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Clear Sample Clipboard",
+    invoke = handlers.clear_sample_clipboard
   }
   renoise.tool():add_menu_entry{
     name = "Main Menu:Tools:HexTools:Sample And Merge Track Notes",
@@ -158,6 +174,22 @@ function M.register_menu_and_keybindings(handlers)
     invoke = handlers.render_selection_to_next_track_destructive
   }
   renoise.tool():add_keybinding {
+    name = "Pattern Editor:Tools:Render Selection To Copy Buffer",
+    invoke = handlers.render_selection_to_copy_buffer
+  }
+  renoise.tool():add_keybinding {
+    name = "Pattern Editor:Tools:Paste Sample from Clipboard",
+    invoke = handlers.paste_sample_from_clipboard
+  }
+  renoise.tool():add_keybinding {
+    name = "Pattern Editor:Tools:Clear Sample Clipboard",
+    invoke = handlers.clear_sample_clipboard
+  }
+  renoise.tool():add_keybinding {
+    name = "Instrument Editor:Tools:Paste Sample from Clipboard",
+    invoke = handlers.paste_sample_from_clipboard
+  }
+  renoise.tool():add_keybinding {
     name = "Pattern Editor:Tools:Sample And Merge Track Notes",
     invoke = handlers.sample_and_merge_track_notes
   }
@@ -226,6 +258,14 @@ function M.register_menu_and_keybindings(handlers)
     invoke = handlers.jump_to_previous_collapsed_track
   }
   renoise.tool():add_keybinding {
+    name = "Pattern Editor:Tools:Jump Quarter Up",
+    invoke = handlers.jump_quarter_up
+  }
+  renoise.tool():add_keybinding {
+    name = "Pattern Editor:Tools:Jump Quarter Down",
+    invoke = handlers.jump_quarter_down
+  }
+  renoise.tool():add_keybinding {
     name = "Pattern Editor:Tools:Toggle Auto-Collapse On Focus Loss",
     invoke = handlers.toggle_auto_collapse_on_focus_loss
   }
@@ -284,6 +324,10 @@ function M.register_menu_and_keybindings(handlers)
   renoise.tool():add_menu_entry{
     name = "Instrument Box:Remap Selected Notes to This",
     invoke = handlers.remap_selected_notes_to_this
+  }
+  renoise.tool():add_menu_entry{
+    name = "Sample Editor:Paste Sample from Clipboard",
+    invoke = handlers.paste_sample_from_clipboard
   }
 end
 

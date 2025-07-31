@@ -6,48 +6,7 @@ local pending_return_state = nil
 -- New unified buffer for play position
 local play_buffer = nil
 
--- Store current cursor position into play_buffer
-function M.set_playhead_buffer()
-  local song = renoise.song()
-  play_buffer = {
-    sequence = song.selected_sequence_index,
-    track = song.selected_track_index,
-    line = song.selected_line_index
-  }
-  renoise.app():show_status(("Buffered play position: seq=%d, track=%d, line=%d")
-    :format(play_buffer.sequence, play_buffer.track, play_buffer.line))
-end
-
--- Jump to buffered position and start playing (always continue pattern)
-function M.play_from_buffer()
-  if not play_buffer then
-    renoise.app():show_status("No play buffer set. Use the buffer hot-key first.")
-    return
-  end
-
-  local song = renoise.song()
-
-  -- Clamp indices in case the song structure changed
-  local seq_idx = math.min(play_buffer.sequence, #song.sequencer.pattern_sequence)
-  song.selected_sequence_index = seq_idx
-
-  -- Only use the line position from buffer, keep current track
-  local patt_idx = song.sequencer:pattern(seq_idx)
-  local patt = song:pattern(patt_idx)
-  local line_idx = math.min(play_buffer.line, patt.number_of_lines)
-  song.selected_line_index = line_idx
-
-  renoise.app():show_status(("Playing from buffered position: seq=%d, track=%d, line=%d")
-    :format(song.selected_sequence_index, song.selected_track_index, song.selected_line_index))
-
-  if song.transport.playing then
-    -- Restart playback at the buffered line within the current pattern
-    song.transport:start_at(line_idx)
-  else
-    song.transport:start(renoise.Transport.PLAYMODE_CONTINUE_PATTERN)
-  end
-end
-
+-- Local function to handle transport stopped events
 local function on_transport_stopped()
   if not pending_return_state then return end
   local song = renoise.song()
@@ -81,6 +40,57 @@ local function on_transport_stopped()
   pending_return_state = nil
   -- Remove the notifier after use
   song.transport.playing_observable:remove_notifier(on_transport_stopped)
+end
+
+-- Store current cursor position into play_buffer
+function M.set_playhead_buffer()
+  local song = renoise.song()
+  play_buffer = {
+    sequence = song.selected_sequence_index,
+    track = song.selected_track_index,
+    line = song.selected_line_index
+  }
+  renoise.app():show_status(("Buffered play position: seq=%d, track=%d, line=%d")
+    :format(play_buffer.sequence, play_buffer.track, play_buffer.line))
+end
+
+-- Toggle play from buffer: if not playing, buffer current line and start playing; if playing, stop and jump back to buffered line
+function M.play_from_buffer()
+  local song = renoise.song()
+  
+  if not song.transport.playing then
+    -- Not playing: buffer current line and start playing from that line
+    -- In record mode, we want to play from the current cursor position, not where transport was
+    play_buffer = {
+      sequence = song.selected_sequence_index,
+      track = song.selected_track_index,
+      line = song.selected_line_index
+    }
+    
+    renoise.app():show_status(("Buffered and playing from: seq=%d, track=%d, line=%d")
+      :format(play_buffer.sequence, play_buffer.track, play_buffer.line))
+    
+    -- Start playing from the current cursor position
+    song.transport:start_at(play_buffer.line)
+  else
+    -- Playing: stop playing and jump back to buffered line
+    if not play_buffer then
+      renoise.app():show_status("No play buffer set. Cannot return to previous position.")
+      return
+    end
+    
+    -- Store the buffer for the return operation
+    pending_return_state = play_buffer
+    play_buffer = nil
+    
+    -- Add the notifier before stopping playback
+    if not song.transport.playing_observable:has_notifier(on_transport_stopped) then
+      song.transport.playing_observable:add_notifier(on_transport_stopped)
+    end
+    
+    song.transport:stop()
+    -- The actual jump will happen when playback has stopped
+  end
 end
 
 function M.play_and_return_toggle()

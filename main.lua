@@ -23,6 +23,18 @@ local function render_selection_to_new_track_destructive()
   render_utils.render_selection_to_new_track(true)
 end
 
+local function render_selection_to_copy_buffer()
+  render_utils.render_selection_to_copy_buffer()
+end
+
+local function paste_sample_from_clipboard()
+  render_utils.paste_sample_from_clipboard()
+end
+
+local function clear_sample_clipboard()
+  render_utils.clear_sample_clipboard()
+end
+
 local function render_selection_to_next_track()
   render_utils.render_selection_to_next_track(false)
 end
@@ -142,6 +154,14 @@ local function jump_to_previous_collapsed_track()
   utils.jump_to_previous_collapsed_track()
 end
 
+local function jump_quarter_up()
+  utils.jump_quarter_up()
+end
+
+local function jump_quarter_down()
+  utils.jump_quarter_down()
+end
+
 local pending_return_state = nil
 
 local registration = require("registration")
@@ -251,6 +271,9 @@ registration.register_menu_and_keybindings({
   render_selection_to_new_track_destructive = render_selection_to_new_track_destructive,
   render_selection_to_next_track = render_selection_to_next_track,
   render_selection_to_next_track_destructive = render_selection_to_next_track_destructive,
+  render_selection_to_copy_buffer = render_selection_to_copy_buffer,
+  paste_sample_from_clipboard = paste_sample_from_clipboard,
+  clear_sample_clipboard = clear_sample_clipboard,
   sample_and_merge_track_notes = sample_and_merge_track_notes,
   set_playhead_buffer = set_playhead_buffer,
   play_from_buffer = play_from_buffer,
@@ -272,6 +295,8 @@ registration.register_menu_and_keybindings({
   jump_to_previous_track = jump_to_previous_track,
   jump_to_next_collapsed_track = jump_to_next_collapsed_track,
   jump_to_previous_collapsed_track = jump_to_previous_collapsed_track,
+  jump_quarter_up = jump_quarter_up,
+  jump_quarter_down = jump_quarter_down,
   toggle_auto_collapse_before_jump = toggle_auto_collapse_before_jump,
   toggle_auto_collapse_on_focus_loss = toggle_auto_collapse_on_focus_loss,
   double_pattern_length = double_pattern_length,
