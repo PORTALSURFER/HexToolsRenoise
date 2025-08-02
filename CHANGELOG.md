@@ -2,6 +2,30 @@
 
 All notable changes to HexTools will be documented in this file.
 
+## [0.3.2] - 2024
+
+### Added
+- **Pattern Matrix Track Merge**: Advanced merging functionality for pattern matrix selections
+  - Select multiple pattern matrix slots across different tracks and patterns
+  - Renders audio from selected tracks to a single new track with C-4 notes
+  - Automatically skips patterns with no musical notes in selected tracks
+  - Filters out special Renoise note values (only counts actual musical notes 1-120)
+  - Sequential rendering to avoid "rendering already in progress" errors
+  - Destructive version removes source tracks after merging
+  - Accessible via Pattern Matrix menu or keybinding
+- **Enhanced Track Navigation**: Added solo functionality to track navigation
+  - Jump to next track with solo - automatically solos the target track
+  - Jump to previous track with solo - automatically solos the target track
+
+### Changed
+- **Improved Note Detection**: Better filtering of musical vs. special Renoise notes
+- **Sequential Rendering**: Fixed rendering conflicts by processing patterns one at a time
+- **Master Track Handling**: Fixed "master track cannot be muted" errors in merge functions
+
+### Technical
+- **Enhanced Pattern Matrix Integration**: Better integration with Renoise's pattern matrix system
+- **Improved Error Handling**: More robust handling of rendering and mute state operations
+
 ## [0.3.1] - 2024
 
 ### Added

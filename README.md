@@ -1,10 +1,29 @@
 # HexTools for Renoise
 
 **Author:** Hex  
-**Version:** v0.3.1  
-**Latest Release:** [v0.3.1](https://github.com/hex/HexTools/releases/tag/v0.3.1)
+**Version:** v0.3.2  
+**Latest Release:** [v0.3.2](https://github.com/hex/HexTools/releases/tag/v0.3.2)
 
 Collection of useful tools for the Renoise digital audio workstation.
+
+## Recent Updates (v0.3.2)
+
+### **New Features**
+- **Pattern Matrix Track Merge**: Advanced merging functionality for pattern matrix selections
+  - Select multiple pattern matrix slots across different tracks and patterns
+  - Renders audio from selected tracks to a single new track with C-4 notes
+  - Automatically skips patterns with no musical notes in selected tracks
+  - Filters out special Renoise note values (only counts actual musical notes 1-120)
+  - Sequential rendering to avoid "rendering already in progress" errors
+  - Destructive version removes source tracks after merging
+  - Accessible via Pattern Matrix menu or keybinding
+
+### **Improvements**
+- **Enhanced Track Navigation**: Added solo functionality to track navigation
+  - Jump to next track with solo - automatically solos the target track
+  - Jump to previous track with solo - automatically solos the target track
+- **Improved Note Detection**: Better filtering of musical vs. special Renoise notes
+- **Sequential Rendering**: Fixed rendering conflicts by processing patterns one at a time
 
 ## Recent Updates (v0.3.1)
 
@@ -62,10 +81,12 @@ HexTools adds the following utilities and workflow enhancements to Renoise:
   - Select multiple pattern matrix slots across different tracks
   - Automatically mutes all other tracks and solos the selected tracks
   - Accessible via Pattern Matrix menu or keybinding
-- **Pattern Matrix Track Merge**: Render selected tracks to new tracks with C-4 notes
-  - Select multiple pattern matrix slots across different tracks
-  - Renders audio from selected tracks for each pattern to a new track
-  - Places C-4 note at the start of each new track with autoseek enabled
+- **Pattern Matrix Track Merge**: Advanced merging functionality for pattern matrix selections
+  - Select multiple pattern matrix slots across different tracks and patterns
+  - Renders audio from selected tracks to a single new track with C-4 notes
+  - Automatically skips patterns with no musical notes in selected tracks
+  - Filters out special Renoise note values (only counts actual musical notes 1-120)
+  - Sequential rendering to avoid "rendering already in progress" errors
   - Accessible via Pattern Matrix menu or keybinding
 - **Pattern Matrix Track Merge Destructive**: Same as merge but removes source tracks
   - Performs the same merge operation as above
