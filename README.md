@@ -94,6 +94,11 @@ HexTools adds the following utilities and workflow enhancements to Renoise:
   - Select individual track slots in the pattern matrix
   - Apply consistent random colors from the current theme palette
   - Accessible via Pattern Matrix menu or keybinding
+- **Pattern Matrix Remove Empty Tracks**: Remove tracks that have no notes across all patterns
+  - Scans all patterns in the song for empty tracks
+  - Removes tracks that contain no musical notes (1-120)
+  - Useful for cleaning up unused tracks after composition
+  - Accessible via Pattern Matrix menu or keybinding
 - **Pattern Matrix Track Solo**: Solo tracks that have selected slots in the pattern matrix
   - Select multiple pattern matrix slots across different tracks
   - Automatically mutes all other tracks and solos the selected tracks
@@ -186,6 +191,7 @@ All features below can be mapped to custom keys in Renoise via the Preferences >
 - `Pattern Editor:Tools:Jump To Next Track (With Solo)`
 - `Pattern Editor:Tools:Jump To Previous Track (With Solo)`
 - `Pattern Editor:Tools:Color Selected Pattern Slots`
+- `Pattern Matrix:Tools:Remove Empty Tracks`
 - `Pattern Matrix:Tools:Solo Selected Tracks`
 - `Pattern Matrix:Tools:Merge Selected Tracks`
 - `Pattern Matrix:Tools:Merge Selected Tracks Destructive`

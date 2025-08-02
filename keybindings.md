@@ -28,6 +28,7 @@
 | Pattern Editor:Tools:Jump To Next Track (With Solo) | `jump_to_next_track_with_solo` |
 | Pattern Editor:Tools:Jump To Previous Track (With Solo) | `jump_to_previous_track_with_solo` |
 | Pattern Editor:Tools:Color Selected Pattern Slots | `color_selected_pattern_slots` |
+| Pattern Matrix:Tools:Remove Empty Tracks | `remove_empty_tracks` |
 | Pattern Matrix:Tools:Solo Selected Tracks | `solo_selected_pattern_matrix_tracks` |
 | Pattern Matrix:Tools:Merge Selected Tracks | `merge_selected_pattern_matrix_tracks` |
 | Pattern Matrix:Tools:Merge Selected Tracks Destructive | `merge_selected_pattern_matrix_tracks_destructive` |

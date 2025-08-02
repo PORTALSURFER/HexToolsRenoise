@@ -350,6 +350,10 @@ function M.register_menu_and_keybindings(handlers)
     invoke = handlers.solo_selected_pattern_matrix_tracks
   }
   renoise.tool():add_keybinding {
+    name = "Pattern Matrix:Tools:Remove Empty Tracks",
+    invoke = handlers.remove_empty_tracks
+  }
+  renoise.tool():add_keybinding {
     name = "Pattern Editor:Tools:Remove Empty Tracks",
     invoke = handlers.remove_empty_tracks
   }
@@ -390,6 +394,10 @@ function M.register_menu_and_keybindings(handlers)
   renoise.tool():add_menu_entry{
     name = "Pattern Matrix:Color Selected Pattern Slots",
     invoke = handlers.color_selected_pattern_slots
+  }
+  renoise.tool():add_menu_entry{
+    name = "Pattern Matrix:Remove Empty Tracks",
+    invoke = handlers.remove_empty_tracks
   }
   renoise.tool():add_menu_entry{
     name = "Pattern Matrix:Solo Selected Tracks",
