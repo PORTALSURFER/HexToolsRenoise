@@ -1,8 +1,8 @@
 # HexTools for Renoise
 
 **Author:** Hex  
-**Version:** v0.4.0  
-**Latest Release:** [v0.4.0](https://github.com/hex/HexTools/releases/tag/v0.4.0)
+**Version:** v0.5.0  
+**Latest Release:** [v0.5.0](https://github.com/hex/HexTools/releases/tag/v0.4.0)
 
 Collection of useful tools for the Renoise digital audio workstation.
 
