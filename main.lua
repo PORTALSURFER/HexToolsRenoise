@@ -745,60 +745,64 @@ local function merge_selected_pattern_matrix_tracks_destructive()
       local tracks_to_remove_list = {}
       local deleted_patterns_count = 0
       
-      -- First, delete the patterns from the source tracks
+      -- First, check which tracks will be completely empty AFTER pattern deletion
+      for track_idx, patterns in pairs(patterns_to_delete) do
+        local track_will_be_empty = true
+        
+        -- Check if this track has any content in patterns that are NOT being deleted
+        for pattern_idx = 1, #song.sequencer.pattern_sequence do
+          -- Get the actual pattern index from the sequencer
+          local actual_pattern_index = song.sequencer:pattern(pattern_idx)
+          -- Skip patterns that are being deleted from this track
+          if not patterns[actual_pattern_index] then
+            local pattern = song:pattern(actual_pattern_index)
+            local track = pattern:track(track_idx)
+            
+            -- Check if this pattern has any content in this track
+            local has_content = false
+            for line_idx = 1, pattern.number_of_lines do
+              local line = track:line(line_idx)
+              for col_idx = 1, 12 do
+                local note_column = line:note_column(col_idx)
+                if note_column.note_value ~= 0 or note_column.instrument_value ~= 0 or note_column.volume_value ~= 0 then
+                  has_content = true
+                  break
+                end
+              end
+              if has_content then break end
+            end
+            
+            -- If this pattern has content and it's not being deleted, track will not be empty
+            if has_content then
+              track_will_be_empty = false
+              break
+            end
+          end
+        end
+        
+        -- If track will be completely empty after deletion, mark it for removal
+        if track_will_be_empty then
+          table.insert(tracks_to_remove_list, track_idx)
+        end
+      end
+      
+      -- Now delete the patterns from the source tracks
       for track_idx, patterns in pairs(patterns_to_delete) do
         for pattern_idx in pairs(patterns) do
           -- Delete the pattern from this track
           local pattern = song:pattern(pattern_idx)
           local track = pattern:track(track_idx)
           
-          -- Clear all lines in this track for this pattern
+          -- Debug: Show what we're clearing
+          renoise.app():show_status(string.format("Clearing pattern %d, track %d", pattern_idx, track_idx))
+          
+          -- Clear all lines in this specific track for this pattern
           for line_idx = 1, pattern.number_of_lines do
             local line = track:line(line_idx)
-            for col_idx = 1, 12 do
-              local note_column = line:note_column(col_idx)
-              note_column.note_value = 0
-              note_column.instrument_value = 0
-              note_column.volume_value = 0
-            end
+            -- Clear the entire line for this track
+            line:clear()
           end
           deleted_patterns_count = deleted_patterns_count + 1
-        end
-      end
-      
-      -- Now check which tracks are completely empty and can be removed
-      for track_idx, patterns in pairs(patterns_to_delete) do
-        local track_is_empty = true
-        
-        -- Check if this track has any content in ANY pattern (not just selected patterns)
-        for pattern_idx = 1, song.sequencer.pattern_count do
-          local pattern = song:pattern(pattern_idx)
-          local track = pattern:track(track_idx)
-          
-          -- Check if this pattern has any content in this track
-          local has_content = false
-          for line_idx = 1, pattern.number_of_lines do
-            local line = track:line(line_idx)
-            for col_idx = 1, 12 do
-              local note_column = line:note_column(col_idx)
-              if note_column.note_value ~= 0 or note_column.instrument_value ~= 0 or note_column.volume_value ~= 0 then
-                has_content = true
-                break
-              end
-            end
-            if has_content then break end
-          end
-          
-          -- If this pattern has content, track is not empty (regardless of whether it was selected)
-          if has_content then
-            track_is_empty = false
-            break
-          end
-        end
-        
-        -- If track is completely empty, mark it for removal
-        if track_is_empty then
-          table.insert(tracks_to_remove_list, track_idx)
         end
       end
       
