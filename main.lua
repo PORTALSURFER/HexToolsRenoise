@@ -408,6 +408,7 @@ local function merge_selected_pattern_matrix_tracks()
   local current_instrument_idx = song.selected_instrument_index + 1
   local previous_track_combination = nil -- Track the previous track combination
   local previous_instrument_idx = nil -- Track the instrument for the previous track combination
+  local previous_pattern_index = nil -- Track the previous pattern index
   
   local function render_next_pattern()
     if current_pattern_index > #patterns_array then
@@ -493,7 +494,7 @@ local function merge_selected_pattern_matrix_tracks()
     end
     table.sort(current_track_combination) -- Sort for consistent comparison
     
-    if previous_track_combination and previous_instrument_idx then
+    if previous_track_combination and previous_instrument_idx and previous_pattern_index then
       -- Compare track combinations
       local tracks_match = true
       if #current_track_combination ~= #previous_track_combination then
@@ -507,21 +508,59 @@ local function merge_selected_pattern_matrix_tracks()
         end
       end
       
+      -- If tracks match, also compare content to ensure they're truly identical
       if tracks_match then
-        -- Same track combination, just add C-4 notes for each occurrence
-        for i = 1, occurrences do
-          local new_pattern = song:pattern(pattern_index)
-          local new_track = new_pattern:track(new_track_idx)
-          local line = new_track:line(1)
-          line:note_column(1).note_value = 48 -- C-4
-          line:note_column(1).instrument_value = previous_instrument_idx - 1 -- 0-based
-          line:note_column(1).volume_value = 0xFF -- full velocity (255 in hex)
+        -- Compare the content of the tracks to ensure they're identical
+        local content_matches = true
+        local current_pattern = song:pattern(pattern_index)
+        local previous_pattern = song:pattern(previous_pattern_index)
+        
+        -- Compare each track's content
+        for _, track_idx in ipairs(current_track_combination) do
+          local current_track = current_pattern:track(track_idx)
+          local previous_track = previous_pattern:track(track_idx)
+          
+          -- Compare all lines in the track
+          for line_idx = 1, current_pattern.number_of_lines do
+            local current_line = current_track:line(line_idx)
+            local previous_line = previous_track:line(line_idx)
+            
+            -- Compare note columns
+            for col_idx = 1, 12 do -- Compare all 12 columns
+              local current_note = current_line:note_column(col_idx)
+              local previous_note = previous_line:note_column(col_idx)
+              
+              if current_note.note_value ~= previous_note.note_value or
+                 current_note.instrument_value ~= previous_note.instrument_value or
+                 current_note.volume_value ~= previous_note.volume_value then
+                content_matches = false
+                break
+              end
+            end
+            
+            if not content_matches then break end
+          end
+          
+          if not content_matches then break end
         end
         
-        -- Move to next pattern
-        current_pattern_index = current_pattern_index + 1
-        render_next_pattern()
-        return
+        -- Only treat as alias if both tracks AND content match
+        if content_matches then
+          -- Same track combination with identical content, just add C-4 notes for each occurrence
+          for i = 1, occurrences do
+            local new_pattern = song:pattern(pattern_index)
+            local new_track = new_pattern:track(new_track_idx)
+            local line = new_track:line(1)
+            line:note_column(1).note_value = 48 -- C-4
+            line:note_column(1).instrument_value = previous_instrument_idx - 1 -- 0-based
+            line:note_column(1).volume_value = 0xFF -- full velocity (255 in hex)
+          end
+          
+          -- Move to next pattern
+          current_pattern_index = current_pattern_index + 1
+          render_next_pattern()
+          return
+        end
       end
     end
     
@@ -604,6 +643,7 @@ local function merge_selected_pattern_matrix_tracks()
       table.sort(current_track_combination)
       previous_track_combination = current_track_combination
       previous_instrument_idx = new_instr_idx
+      previous_pattern_index = pattern_index
       
       -- Add C-4 notes for each occurrence of this pattern
       for i = 1, occurrences do
@@ -696,6 +736,7 @@ local function merge_selected_pattern_matrix_tracks_destructive()
   local current_instrument_idx = song.selected_instrument_index + 1
   local previous_track_combination = nil -- Track the previous track combination
   local previous_instrument_idx = nil -- Track the instrument for the previous track combination
+  local previous_pattern_index = nil -- Track the previous pattern index
   
   local function render_next_pattern()
     if current_pattern_index > #patterns_array then
@@ -792,7 +833,7 @@ local function merge_selected_pattern_matrix_tracks_destructive()
     end
     table.sort(current_track_combination) -- Sort for consistent comparison
     
-    if previous_track_combination and previous_instrument_idx then
+    if previous_track_combination and previous_instrument_idx and previous_pattern_index then
       -- Compare track combinations
       local tracks_match = true
       if #current_track_combination ~= #previous_track_combination then
@@ -806,21 +847,59 @@ local function merge_selected_pattern_matrix_tracks_destructive()
         end
       end
       
+      -- If tracks match, also compare content to ensure they're truly identical
       if tracks_match then
-        -- Same track combination, just add C-4 notes for each occurrence
-        for i = 1, occurrences do
-          local new_pattern = song:pattern(pattern_index)
-          local new_track = new_pattern:track(new_track_idx)
-          local line = new_track:line(1)
-          line:note_column(1).note_value = 48 -- C-4
-          line:note_column(1).instrument_value = previous_instrument_idx - 1 -- 0-based
-          line:note_column(1).volume_value = 0xFF -- full velocity (255 in hex)
+        -- Compare the content of the tracks to ensure they're identical
+        local content_matches = true
+        local current_pattern = song:pattern(pattern_index)
+        local previous_pattern = song:pattern(previous_pattern_index)
+        
+        -- Compare each track's content
+        for _, track_idx in ipairs(current_track_combination) do
+          local current_track = current_pattern:track(track_idx)
+          local previous_track = previous_pattern:track(track_idx)
+          
+          -- Compare all lines in the track
+          for line_idx = 1, current_pattern.number_of_lines do
+            local current_line = current_track:line(line_idx)
+            local previous_line = previous_track:line(line_idx)
+            
+            -- Compare note columns
+            for col_idx = 1, 12 do -- Compare all 12 columns
+              local current_note = current_line:note_column(col_idx)
+              local previous_note = previous_line:note_column(col_idx)
+              
+              if current_note.note_value ~= previous_note.note_value or
+                 current_note.instrument_value ~= previous_note.instrument_value or
+                 current_note.volume_value ~= previous_note.volume_value then
+                content_matches = false
+                break
+              end
+            end
+            
+            if not content_matches then break end
+          end
+          
+          if not content_matches then break end
         end
         
-        -- Move to next pattern
-        current_pattern_index = current_pattern_index + 1
-        render_next_pattern()
-        return
+        -- Only treat as alias if both tracks AND content match
+        if content_matches then
+          -- Same track combination with identical content, just add C-4 notes for each occurrence
+          for i = 1, occurrences do
+            local new_pattern = song:pattern(pattern_index)
+            local new_track = new_pattern:track(new_track_idx)
+            local line = new_track:line(1)
+            line:note_column(1).note_value = 48 -- C-4
+            line:note_column(1).instrument_value = previous_instrument_idx - 1 -- 0-based
+            line:note_column(1).volume_value = 0xFF -- full velocity (255 in hex)
+          end
+          
+          -- Move to next pattern
+          current_pattern_index = current_pattern_index + 1
+          render_next_pattern()
+          return
+        end
       end
     end
     
@@ -905,6 +984,7 @@ local function merge_selected_pattern_matrix_tracks_destructive()
       table.sort(current_track_combination)
       previous_track_combination = current_track_combination
       previous_instrument_idx = new_instr_idx
+      previous_pattern_index = pattern_index
       
       -- Add C-4 notes for each occurrence of this pattern
       for i = 1, occurrences do
