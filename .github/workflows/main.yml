@@ -61,7 +61,7 @@ jobs:
       # 5. Zip the package using the version-based filename
       - name: Zip XRNX Package
         run: |
-          zip -r "${{ env.FILENAME }}" .
+          zip -x '*.git*' -r "${{ env.FILENAME }}" .
 
       # 6. Create and Push Git Tag
       - name: Create and Push Tag
