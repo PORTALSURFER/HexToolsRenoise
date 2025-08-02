@@ -967,11 +967,14 @@ local function merge_selected_pattern_matrix_tracks_destructive()
       local existing_instrument_idx = rendered_patterns[pattern_index]
       
       -- Mark patterns for deletion in destructive mode
+      -- Find all sequence positions that use this pattern
       for _, slot in ipairs(slots) do
         if not patterns_to_delete[slot.track] then
           patterns_to_delete[slot.track] = {}
         end
-        patterns_to_delete[slot.track][pattern_index] = true
+        -- Mark this specific sequence position's pattern for deletion
+        local sequence_pattern_index = sequencer:pattern(slot.sequence)
+        patterns_to_delete[slot.track][sequence_pattern_index] = true
       end
       
       -- Add C-4 notes for each occurrence of this pattern
@@ -1051,11 +1054,14 @@ local function merge_selected_pattern_matrix_tracks_destructive()
         if content_matches then
           -- Same track combination with identical content, just add C-4 notes for each occurrence
           -- Mark patterns for deletion in destructive mode
+          -- Find all sequence positions that use this pattern
           for _, slot in ipairs(slots) do
             if not patterns_to_delete[slot.track] then
               patterns_to_delete[slot.track] = {}
             end
-            patterns_to_delete[slot.track][pattern_index] = true
+            -- Mark this specific sequence position's pattern for deletion
+            local sequence_pattern_index = sequencer:pattern(slot.sequence)
+            patterns_to_delete[slot.track][sequence_pattern_index] = true
           end
           
           for i = 1, occurrences do
