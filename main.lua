@@ -731,6 +731,7 @@ local function merge_selected_pattern_matrix_tracks_destructive()
   
   local rendered_count = 0
   local tracks_to_remove = {}
+  local patterns_to_delete = {} -- Track which patterns to delete from which tracks
   local current_pattern_index = 1
   local rendered_patterns = {} -- Track which patterns have already been rendered
   local current_instrument_idx = song.selected_instrument_index + 1
@@ -740,19 +741,76 @@ local function merge_selected_pattern_matrix_tracks_destructive()
   
   local function render_next_pattern()
     if current_pattern_index > #patterns_array then
-      -- All patterns rendered, now remove source tracks
+      -- All patterns rendered, now delete patterns from source tracks
       local tracks_to_remove_list = {}
-      for track_idx in pairs(tracks_to_remove) do
-        table.insert(tracks_to_remove_list, track_idx)
+      local deleted_patterns_count = 0
+      
+      -- First, delete the patterns from the source tracks
+      for track_idx, patterns in pairs(patterns_to_delete) do
+        for pattern_idx in pairs(patterns) do
+          -- Delete the pattern from this track
+          local pattern = song:pattern(pattern_idx)
+          local track = pattern:track(track_idx)
+          
+          -- Clear all lines in this track for this pattern
+          for line_idx = 1, pattern.number_of_lines do
+            local line = track:line(line_idx)
+            for col_idx = 1, 12 do
+              local note_column = line:note_column(col_idx)
+              note_column.note_value = 0
+              note_column.instrument_value = 0
+              note_column.volume_value = 0
+            end
+          end
+          deleted_patterns_count = deleted_patterns_count + 1
+        end
       end
+      
+      -- Now check which tracks are completely empty and can be removed
+      for track_idx, patterns in pairs(patterns_to_delete) do
+        local track_is_empty = true
+        
+        -- Check if this track has any content in ANY pattern (not just selected patterns)
+        for pattern_idx = 1, song.sequencer.pattern_count do
+          local pattern = song:pattern(pattern_idx)
+          local track = pattern:track(track_idx)
+          
+          -- Check if this pattern has any content in this track
+          local has_content = false
+          for line_idx = 1, pattern.number_of_lines do
+            local line = track:line(line_idx)
+            for col_idx = 1, 12 do
+              local note_column = line:note_column(col_idx)
+              if note_column.note_value ~= 0 or note_column.instrument_value ~= 0 or note_column.volume_value ~= 0 then
+                has_content = true
+                break
+              end
+            end
+            if has_content then break end
+          end
+          
+          -- If this pattern has content, track is not empty (regardless of whether it was selected)
+          if has_content then
+            track_is_empty = false
+            break
+          end
+        end
+        
+        -- If track is completely empty, mark it for removal
+        if track_is_empty then
+          table.insert(tracks_to_remove_list, track_idx)
+        end
+      end
+      
+      -- Remove empty tracks (in reverse order to maintain indices)
       table.sort(tracks_to_remove_list, function(a, b) return a > b end)
       
       for _, track_idx in ipairs(tracks_to_remove_list) do
         song:delete_track_at(track_idx)
       end
       
-      renoise.app():show_status(string.format("Merged %d unique patterns to new track and removed %d source tracks", 
-        rendered_count, #tracks_to_remove_list))
+      renoise.app():show_status(string.format("Merged %d unique patterns to new track, deleted %d patterns, and removed %d empty tracks", 
+        rendered_count, deleted_patterns_count, #tracks_to_remove_list))
       return
     end
     
@@ -918,8 +976,11 @@ local function merge_selected_pattern_matrix_tracks_destructive()
       local track = song.tracks[slot.track]
       if track and track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
         track.mute_state = renoise.Track.MUTE_STATE_ACTIVE
-        -- Mark track for removal
-        tracks_to_remove[slot.track] = true
+        -- Mark pattern for deletion from this track
+        if not patterns_to_delete[slot.track] then
+          patterns_to_delete[slot.track] = {}
+        end
+        patterns_to_delete[slot.track][pattern_index] = true
       end
     end
     
