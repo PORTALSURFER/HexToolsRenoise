@@ -1,7 +1,7 @@
 # HexTools Documentation
 
 **Author:** Hex  
-**Version:** v0.4.0  
+**Version:** v0.7.0  
 
 Complete documentation for HexTools features and functionality.
 

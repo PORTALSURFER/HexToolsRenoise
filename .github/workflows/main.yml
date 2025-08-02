@@ -58,12 +58,21 @@ jobs:
           git add manifest.xml
           git commit -m "Bump version to $NEW_VERSION"
 
-      # 5. Zip the package using the version-based filename
+      # 5. Create package directory and copy files (excluding unwanted files)
+      - name: Create Package Directory
+        run: |
+          mkdir -p package_temp
+          # Copy all files except excluded ones
+          rsync -av --exclude='.github/' --exclude='.vscode/' --exclude='resources/' --exclude='.cursorrules' --exclude='.gitignore' --exclude='AGENTS.md' --exclude='.git/' --exclude='package_temp/' . package_temp/
+
+      # 6. Zip the package using the version-based filename
       - name: Zip XRNX Package
         run: |
-          git archive -o "${{ env.FILENAME }}" HEAD
+          cd package_temp
+          zip -r "../${{ env.FILENAME }}" .
+          cd ..
 
-      # 6. Create and Push Git Tag
+      # 7. Create and Push Git Tag
       - name: Create and Push Tag
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -71,7 +80,7 @@ jobs:
           git tag "$TAG_NAME"
           git push origin "$TAG_NAME"
 
-      # 7. Create GitHub Release
+      # 8. Create GitHub Release
       - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@v1
@@ -83,7 +92,7 @@ jobs:
           draft: false
           prerelease: false
 
-      # 8. Upload Release Asset
+      # 9. Upload Release Asset
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
         env:
@@ -93,3 +102,8 @@ jobs:
           asset_path: ${{ env.FILENAME }}
           asset_name: ${{ env.FILENAME }}
           asset_content_type: application/octet-stream
+
+      # 10. Cleanup temporary directory
+      - name: Cleanup
+        run: |
+          rm -rf package_temp
