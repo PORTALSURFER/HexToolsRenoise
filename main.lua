@@ -579,10 +579,16 @@ local function merge_selected_pattern_matrix_tracks()
       for i = 1, occurrences do
         local new_pattern = song:pattern(pattern_index)
         local new_track = new_pattern:track(new_track_idx)
-        local line = new_track:line(1)
-        line:note_column(1).note_value = 48 -- C-4
-        line:note_column(1).instrument_value = existing_instrument_idx - 1 -- 0-based
-        line:note_column(1).volume_value = 0xFF -- full velocity (255 in hex)
+        
+        -- Safety check: ensure the track exists and has note columns
+        if new_track then
+          local line = new_track:line(1)
+          if line and #line.note_columns > 0 then
+            line:note_column(1).note_value = 48 -- C-4
+            line:note_column(1).instrument_value = existing_instrument_idx - 1 -- 0-based
+            line:note_column(1).volume_value = 0xFF -- full velocity (255 in hex)
+          end
+        end
       end
       
       -- Move to next pattern
@@ -631,14 +637,17 @@ local function merge_selected_pattern_matrix_tracks()
             
             -- Compare note columns
             for col_idx = 1, 12 do -- Compare all 12 columns
-              local current_note = current_line:note_column(col_idx)
-              local previous_note = previous_line:note_column(col_idx)
-              
-              if current_note.note_value ~= previous_note.note_value or
-                 current_note.instrument_value ~= previous_note.instrument_value or
-                 current_note.volume_value ~= previous_note.volume_value then
-                content_matches = false
-                break
+              -- Safety check: ensure both lines have note columns
+              if current_line and #current_line.note_columns >= col_idx and previous_line and #previous_line.note_columns >= col_idx then
+                local current_note = current_line:note_column(col_idx)
+                local previous_note = previous_line:note_column(col_idx)
+                
+                if current_note.note_value ~= previous_note.note_value or
+                   current_note.instrument_value ~= previous_note.instrument_value or
+                   current_note.volume_value ~= previous_note.volume_value then
+                  content_matches = false
+                  break
+                end
               end
             end
             
@@ -654,10 +663,16 @@ local function merge_selected_pattern_matrix_tracks()
           for i = 1, occurrences do
             local new_pattern = song:pattern(pattern_index)
             local new_track = new_pattern:track(new_track_idx)
-            local line = new_track:line(1)
-            line:note_column(1).note_value = 48 -- C-4
-            line:note_column(1).instrument_value = previous_instrument_idx - 1 -- 0-based
-            line:note_column(1).volume_value = 0xFF -- full velocity (255 in hex)
+            
+            -- Safety check: ensure the track exists and has note columns
+            if new_track then
+              local line = new_track:line(1)
+              if line and #line.note_columns > 0 then
+                line:note_column(1).note_value = 48 -- C-4
+                line:note_column(1).instrument_value = previous_instrument_idx - 1 -- 0-based
+                line:note_column(1).volume_value = 0xFF -- full velocity (255 in hex)
+              end
+            end
           end
           
           -- Move to next pattern
@@ -753,10 +768,16 @@ local function merge_selected_pattern_matrix_tracks()
       for i = 1, occurrences do
         local new_pattern = song:pattern(pattern_index)
         local new_track = new_pattern:track(new_track_idx)
-        local line = new_track:line(1)
-        line:note_column(1).note_value = 48 -- C-4
-        line:note_column(1).instrument_value = new_instr_idx - 1 -- 0-based
-        line:note_column(1).volume_value = 0xFF -- full velocity (255 in hex)
+        
+        -- Safety check: ensure the track exists and has note columns
+        if new_track then
+          local line = new_track:line(1)
+          if line and #line.note_columns > 0 then
+            line:note_column(1).note_value = 48 -- C-4
+            line:note_column(1).instrument_value = new_instr_idx - 1 -- 0-based
+            line:note_column(1).volume_value = 0xFF -- full velocity (255 in hex)
+          end
+        end
       end
       
       rendered_count = rendered_count + 1
@@ -790,6 +811,14 @@ local function merge_selected_pattern_matrix_tracks_destructive()
   if #selected_slots == 0 then
     renoise.app():show_status("No pattern matrix grid slots selected")
     return
+  end
+  
+  -- Buffer source tracks before merge
+  local source_tracks = {}
+  for _, slot in ipairs(selected_slots) do
+    if not source_tracks[slot.track] then
+      source_tracks[slot.track] = true
+    end
   end
   
   -- Group selected slots by pattern and detect aliases, maintaining sequence order
@@ -834,7 +863,6 @@ local function merge_selected_pattern_matrix_tracks_destructive()
   song:insert_track_at(new_track_idx)
   
   local rendered_count = 0
-  local tracks_to_remove = {}
   local patterns_to_delete = {} -- Track which patterns to delete from which tracks
   local current_pattern_index = 1
   local rendered_patterns = {} -- Track which patterns have already been rendered
@@ -846,99 +874,40 @@ local function merge_selected_pattern_matrix_tracks_destructive()
   local function render_next_pattern()
     if current_pattern_index > #patterns_array then
       -- All patterns rendered, now delete patterns from source tracks
-      local tracks_to_remove_list = {}
       local deleted_patterns_count = 0
+      local debug_messages = {} -- Collect debug messages for dialog
       
-             -- First, check which tracks will be completely empty AFTER pattern deletion
-       renoise.app():show_status(string.format("DEBUG: Checking %d tracks for empty status", #patterns_to_delete))
-                for track_idx, patterns in pairs(patterns_to_delete) do
-           renoise.app():show_status(string.format("DEBUG: Checking track %d for patterns to delete", track_idx))
-           local pattern_count = 0
-           for pattern_idx in pairs(patterns) do
-             pattern_count = pattern_count + 1
-           end
-           renoise.app():show_status(string.format("DEBUG: Track %d has %d patterns to delete", track_idx, pattern_count))
-           local track_will_be_empty = true
-         
-                   -- Check if this track has any content in patterns that are NOT being deleted
-          for pattern_idx = 1, #song.sequencer.pattern_sequence do
-            local actual_pattern_index = song.sequencer:pattern(pattern_idx)
-            -- Check patterns that are NOT being deleted from this track
-            if not patterns[actual_pattern_index] then
-              local pattern = song:pattern(actual_pattern_index)
-              local track = pattern:track(track_idx)
-              
-              -- Check if this pattern has any content in this track
-              local has_content = false
-              for line_idx = 1, pattern.number_of_lines do
-                local line = track:line(line_idx)
-                for col_idx = 1, 12 do
-                  local note_column = line:note_column(col_idx)
-                  if note_column.note_value ~= 0 or note_column.instrument_value ~= 0 or note_column.volume_value ~= 0 then
-                    has_content = true
-                    break
-                  end
-                end
-                if has_content then break end
-              end
-              
-              -- If this pattern has content and it's not being deleted, track will not be empty
-              if has_content then
-                track_will_be_empty = false
-                break
-              end
-            end
+      local function add_debug(msg)
+        table.insert(debug_messages, msg)
+        -- Limit debug messages to prevent excessive memory usage
+        if #debug_messages > 200 then
+          -- Keep only the last 150 messages and add a truncation notice
+          local truncated_messages = {}
+          for i = #debug_messages - 149, #debug_messages do
+            table.insert(truncated_messages, debug_messages[i])
           end
-         
-         -- If track will be completely empty after deletion, mark it for removal
-         if track_will_be_empty then
-           table.insert(tracks_to_remove_list, track_idx)
-           renoise.app():show_status(string.format("DEBUG: Track %d will be empty after deletion", track_idx))
-         else
-           renoise.app():show_status(string.format("DEBUG: Track %d will NOT be empty after deletion", track_idx))
-         end
-       end
-      
-      -- Also check if any tracks are completely empty BEFORE deletion (safety check)
-      for track_idx, patterns in pairs(patterns_to_delete) do
-        local track_is_already_empty = true
-        
-        -- Check if this track has any content at all
-        for pattern_idx = 1, #song.sequencer.pattern_sequence do
-          local actual_pattern_index = song.sequencer:pattern(pattern_idx)
-          local pattern = song:pattern(actual_pattern_index)
-          local track = pattern:track(track_idx)
-          
-          -- Check if this pattern has any content in this track
-          for line_idx = 1, pattern.number_of_lines do
-            local line = track:line(line_idx)
-            for col_idx = 1, 12 do
-              local note_column = line:note_column(col_idx)
-              if note_column.note_value ~= 0 or note_column.instrument_value ~= 0 or note_column.volume_value ~= 0 then
-                track_is_already_empty = false
-                break
-              end
-            end
-            if not track_is_already_empty then break end
-          end
-          if not track_is_already_empty then break end
-        end
-        
-        -- If track is already completely empty, mark it for removal
-        local already_in_list = false
-        for _, existing_track_idx in ipairs(tracks_to_remove_list) do
-          if existing_track_idx == track_idx then
-            already_in_list = true
-            break
-          end
-        end
-        if track_is_already_empty and not already_in_list then
-          table.insert(tracks_to_remove_list, track_idx)
+          debug_messages = truncated_messages
+          table.insert(debug_messages, 1, "-- Debug messages truncated (too many) --")
         end
       end
       
-      -- Now delete the patterns from the source tracks
+      add_debug(string.format("DEBUG: Starting destructive merge process"))
+      -- Convert source tracks table keys to array for display
+      local source_track_list = {}
+      for track_idx in pairs(source_tracks) do
+        table.insert(source_track_list, tostring(track_idx))
+      end
+      add_debug(string.format("DEBUG: Source tracks: %s", table.concat(source_track_list, ", ")))
+      add_debug(string.format("DEBUG: Target track: %d", new_track_idx))
+      
+      -- Delete the patterns from the source tracks
       for track_idx, patterns in pairs(patterns_to_delete) do
+        local pattern_count = 0
+        for pattern_idx in pairs(patterns) do
+          pattern_count = pattern_count + 1
+        end
+        add_debug(string.format("DEBUG: Track %d has %d patterns to delete", track_idx, pattern_count))
+        
         for pattern_idx in pairs(patterns) do
           -- Delete the pattern from this track
           local pattern = song:pattern(pattern_idx)
@@ -954,30 +923,142 @@ local function merge_selected_pattern_matrix_tracks_destructive()
         end
       end
       
-             -- Remove empty tracks (in reverse order to maintain indices)
-       table.sort(tracks_to_remove_list, function(a, b) return a > b end)
-       
-       -- Calculate how many tracks will be deleted before the target track
-       local tracks_deleted_before_target = 0
-       for _, track_idx in ipairs(tracks_to_remove_list) do
-         if track_idx < new_track_idx then
-           tracks_deleted_before_target = tracks_deleted_before_target + 1
-         end
-       end
-       
-       for _, track_idx in ipairs(tracks_to_remove_list) do
-         song:delete_track_at(track_idx)
-       end
-       
-               -- Ensure the target track is unmuted (accounting for index shifts)
-        local adjusted_target_track_idx = new_track_idx - tracks_deleted_before_target
-        local target_track = song.tracks[adjusted_target_track_idx]
-        if target_track and target_track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
-          target_track.mute_state = renoise.Track.MUTE_STATE_ACTIVE
+      add_debug(string.format("DEBUG: Deleted %d patterns total", deleted_patterns_count))
+      
+      -- Now test which source tracks became empty after the merge
+      local tracks_to_remove = {}
+      
+      for track_idx in pairs(source_tracks) do
+        -- Skip the target track - it should never be deleted
+        if track_idx == new_track_idx then
+          add_debug(string.format("DEBUG: Skipping target track %d (should never be deleted)", track_idx))
+          goto continue
         end
         
-        renoise.app():show_status(string.format("Merged %d unique patterns to new track, deleted %d patterns, and removed %d empty tracks (target track: %d -> %d)", 
-          rendered_count, deleted_patterns_count, #tracks_to_remove_list, new_track_idx, adjusted_target_track_idx))
+        local track_is_empty = true
+        local patterns_checked = 0
+        local patterns_skipped = 0
+        
+        add_debug(string.format("DEBUG: Checking track %d for emptiness", track_idx))
+        
+        -- Check if this track has any content at all after pattern deletion
+        -- Only check patterns that were NOT deleted from this track
+        for pattern_idx = 1, #song.sequencer.pattern_sequence do
+          local actual_pattern_index = song.sequencer:pattern(pattern_idx)
+          
+          -- Skip this pattern if it was deleted from this track
+          if patterns_to_delete[track_idx] and patterns_to_delete[track_idx][actual_pattern_index] then
+            patterns_skipped = patterns_skipped + 1
+            add_debug(string.format("DEBUG: Track %d - Skipping pattern %d (was deleted)", track_idx, actual_pattern_index))
+            goto continue_pattern_check
+          end
+          
+          local pattern = song:pattern(actual_pattern_index)
+          local track = pattern:track(track_idx)
+          
+          -- Check if this pattern has any content in this track
+          patterns_checked = patterns_checked + 1
+          add_debug(string.format("DEBUG: Track %d - Checking pattern %d", track_idx, actual_pattern_index))
+          
+          for line_idx = 1, pattern.number_of_lines do
+            local line = track:line(line_idx)
+            for col_idx = 1, 12 do
+              local note_column = line:note_column(col_idx)
+              local note_value = note_column.note_value
+              local instrument_value = note_column.instrument_value
+              local volume_value = note_column.volume_value
+              
+              -- Ignore special notes that should not count as content
+              local is_special_note = (note_value == 121) or  -- note-off/stop notes
+                                   (volume_value == 255) or   -- max volume (control signal)
+                                   (instrument_value == 255)  -- no instrument
+              
+              if (note_value ~= 0 or instrument_value ~= 0 or volume_value ~= 0) and not is_special_note then
+                track_is_empty = false
+                add_debug(string.format("DEBUG: Track %d - Found content in pattern %d, line %d, column %d (note: %d, instrument: %d, volume: %d)", 
+                  track_idx, actual_pattern_index, line_idx, col_idx, note_value, instrument_value, volume_value))
+                break
+              elseif is_special_note then
+                add_debug(string.format("DEBUG: Track %d - Ignoring special note in pattern %d, line %d, column %d (note: %d, instrument: %d, volume: %d)", 
+                  track_idx, actual_pattern_index, line_idx, col_idx, note_value, instrument_value, volume_value))
+              end
+            end
+            if not track_is_empty then break end
+          end
+          if not track_is_empty then break end
+          
+          ::continue_pattern_check::
+        end
+        
+        add_debug(string.format("DEBUG: Track %d - Checked %d patterns, skipped %d patterns", track_idx, patterns_checked, patterns_skipped))
+        
+        -- If track is empty after deletion, mark it for removal
+        if track_is_empty then
+          table.insert(tracks_to_remove, track_idx)
+          add_debug(string.format("DEBUG: Track %d is empty after deletion - will be removed", track_idx))
+        else
+          add_debug(string.format("DEBUG: Track %d still has content - will be kept", track_idx))
+        end
+        ::continue::
+      end
+      
+      -- Remove empty tracks (in reverse order to maintain indices)
+      table.sort(tracks_to_remove, function(a, b) return a > b end)
+      
+      add_debug(string.format("DEBUG: About to remove %d empty tracks: %s", #tracks_to_remove, table.concat(tracks_to_remove, ", ")))
+      
+      -- Calculate how many tracks will be deleted before the target track
+      local tracks_deleted_before_target = 0
+      for _, track_idx in ipairs(tracks_to_remove) do
+        if track_idx < new_track_idx then
+          tracks_deleted_before_target = tracks_deleted_before_target + 1
+        end
+      end
+      
+      add_debug(string.format("DEBUG: Will delete %d tracks before target track %d", tracks_deleted_before_target, new_track_idx))
+      
+      for _, track_idx in ipairs(tracks_to_remove) do
+        add_debug(string.format("DEBUG: Deleting track %d", track_idx))
+        song:delete_track_at(track_idx)
+      end
+      
+      -- Ensure the target track is unmuted (accounting for index shifts)
+      local adjusted_target_track_idx = new_track_idx - tracks_deleted_before_target
+      local target_track = song.tracks[adjusted_target_track_idx]
+      if target_track and target_track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
+        target_track.mute_state = renoise.Track.MUTE_STATE_ACTIVE
+      end
+      
+      -- Update new_track_idx to account for track deletions
+      new_track_idx = adjusted_target_track_idx
+      
+      add_debug(string.format("DEBUG: Final result - Merged %d unique patterns to new track, deleted %d patterns, and removed %d empty tracks (target track: %d -> %d)", 
+        rendered_count, deleted_patterns_count, #tracks_to_remove, new_track_idx, adjusted_target_track_idx))
+      
+      -- Show debug dialog
+      local vb = renoise.ViewBuilder()
+      local debug_text = table.concat(debug_messages, "\n")
+      
+      -- Limit debug text size to prevent dialog from becoming too large
+      local max_debug_length = 10000  -- Limit to 10k characters
+      if #debug_text > max_debug_length then
+        debug_text = string.sub(debug_text, 1, max_debug_length) .. "\n\n... (truncated - too much debug info)"
+      end
+      
+      local dialog_content = vb:column {
+        vb:text { text = "Debug Information:" },
+        vb:text { text = debug_text, width = 600, height = 300 },
+        vb:button {
+          text = "OK",
+          notifier = function()
+            -- Dialog will close automatically
+          end
+        }
+      }
+      renoise.app():show_custom_dialog("Merge Debug Info", dialog_content)
+      
+      renoise.app():show_status(string.format("Merged %d unique patterns to new track, deleted %d patterns, and removed %d empty tracks", 
+        rendered_count, deleted_patterns_count, #tracks_to_remove))
       return
     end
     
@@ -1050,10 +1131,16 @@ local function merge_selected_pattern_matrix_tracks_destructive()
       for i = 1, occurrences do
         local new_pattern = song:pattern(pattern_index)
         local new_track = new_pattern:track(new_track_idx)
-        local line = new_track:line(1)
-        line:note_column(1).note_value = 48 -- C-4
-        line:note_column(1).instrument_value = existing_instrument_idx - 1 -- 0-based
-        line:note_column(1).volume_value = 0xFF -- full velocity (255 in hex)
+        
+        -- Safety check: ensure the track exists and has note columns
+        if new_track then
+          local line = new_track:line(1)
+          if line and #line.note_columns > 0 then
+            line:note_column(1).note_value = 48 -- C-4
+            line:note_column(1).instrument_value = existing_instrument_idx - 1 -- 0-based
+            line:note_column(1).volume_value = 0xFF -- full velocity (255 in hex)
+          end
+        end
       end
       
       -- Move to next pattern
@@ -1102,14 +1189,17 @@ local function merge_selected_pattern_matrix_tracks_destructive()
             
             -- Compare note columns
             for col_idx = 1, 12 do -- Compare all 12 columns
-              local current_note = current_line:note_column(col_idx)
-              local previous_note = previous_line:note_column(col_idx)
-              
-              if current_note.note_value ~= previous_note.note_value or
-                 current_note.instrument_value ~= previous_note.instrument_value or
-                 current_note.volume_value ~= previous_note.volume_value then
-                content_matches = false
-                break
+              -- Safety check: ensure both lines have note columns
+              if current_line and #current_line.note_columns >= col_idx and previous_line and #previous_line.note_columns >= col_idx then
+                local current_note = current_line:note_column(col_idx)
+                local previous_note = previous_line:note_column(col_idx)
+                
+                if current_note.note_value ~= previous_note.note_value or
+                   current_note.instrument_value ~= previous_note.instrument_value or
+                   current_note.volume_value ~= previous_note.volume_value then
+                  content_matches = false
+                  break
+                end
               end
             end
             
@@ -1136,10 +1226,16 @@ local function merge_selected_pattern_matrix_tracks_destructive()
           for i = 1, occurrences do
             local new_pattern = song:pattern(pattern_index)
             local new_track = new_pattern:track(new_track_idx)
-            local line = new_track:line(1)
-            line:note_column(1).note_value = 48 -- C-4
-            line:note_column(1).instrument_value = previous_instrument_idx - 1 -- 0-based
-            line:note_column(1).volume_value = 0xFF -- full velocity (255 in hex)
+            
+            -- Safety check: ensure the track exists and has note columns
+            if new_track then
+              local line = new_track:line(1)
+              if line and #line.note_columns > 0 then
+                line:note_column(1).note_value = 48 -- C-4
+                line:note_column(1).instrument_value = previous_instrument_idx - 1 -- 0-based
+                line:note_column(1).volume_value = 0xFF -- full velocity (255 in hex)
+              end
+            end
           end
           
           -- Move to next pattern
@@ -1240,10 +1336,16 @@ local function merge_selected_pattern_matrix_tracks_destructive()
       for i = 1, occurrences do
         local new_pattern = song:pattern(pattern_index)
         local new_track = new_pattern:track(new_track_idx)
-        local line = new_track:line(1)
-        line:note_column(1).note_value = 48 -- C-4
-        line:note_column(1).instrument_value = new_instr_idx - 1 -- 0-based
-        line:note_column(1).volume_value = 0xFF -- full velocity (255 in hex)
+        
+        -- Safety check: ensure the track exists and has note columns
+        if new_track then
+          local line = new_track:line(1)
+          if line and #line.note_columns > 0 then
+            line:note_column(1).note_value = 48 -- C-4
+            line:note_column(1).instrument_value = new_instr_idx - 1 -- 0-based
+            line:note_column(1).volume_value = 0xFF -- full velocity (255 in hex)
+          end
+        end
       end
       
       rendered_count = rendered_count + 1
