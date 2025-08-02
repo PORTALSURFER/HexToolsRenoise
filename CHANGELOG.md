@@ -11,6 +11,16 @@ All notable changes to HexTools will be documented in this file.
   - Maintains chronological order based on sequence position
   - Dramatically improves performance for repeated track combinations
   - Works alongside existing pattern-level alias detection
+- **Pattern Matrix Remove Empty Tracks**: Remove tracks that have no notes across all patterns
+  - Scans all patterns in the song for empty tracks
+  - Removes tracks that contain no musical notes (1-120)
+  - Useful for cleaning up unused tracks after composition
+  - Accessible via Pattern Matrix menu or keybinding
+- **Smart Destructive Merge**: Enhanced cleanup for Pattern Matrix merge operations
+  - Only deletes patterns that were selected and merged
+  - Preserves tracks with content in unselected patterns
+  - Removes only tracks that become completely empty after pattern deletion
+  - Safer cleanup that respects user's selection intent
 
 ### Changed
 - **Enhanced Pattern Matrix Merge**: Added intelligent alias detection at multiple levels
@@ -20,11 +30,13 @@ All notable changes to HexTools will be documented in this file.
   - Optimized C-4 placement: Adds notes for each occurrence while avoiding redundant rendering
 - **Improved Rendering Performance**: Significantly faster processing for repeated track combinations
 - **Better Sequence Handling**: Fixed pattern processing order to maintain chronological timeline
+- **Safer Track Cleanup**: Destructive merge now preserves unselected content automatically
 
 ### Technical
 - **Multi-Level Alias Detection**: Implemented both pattern-level and track-level alias detection
 - **Enhanced Track Combination Tracking**: Robust tracking of track combinations for alias detection
 - **Optimized Rendering Pipeline**: Reduced redundant rendering operations
+- **Comprehensive Track Scanning**: Full track content analysis across all patterns for safe cleanup
 
 ## [0.3.2] - 2024
 
