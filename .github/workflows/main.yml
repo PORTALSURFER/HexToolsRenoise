@@ -1,0 +1,65 @@
+name: Package Repository as .XRNX
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  package-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Checkout the repository
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          submodules: false
+
+      # 2. Generate a timestamp-based tag and filename
+      - name: Generate Tag and Filename
+        run: |
+          DATESTAMP=$(date +'%Y-%m-%d')
+          TIMESTAMP=$(date +'%H-%M-%S')
+          TAG_NAME="release-${DATESTAMP}_${TIMESTAMP}"
+          FILENAME="com.hex.HexTools-${DATESTAMP}-${TIMESTAMP}.xrnx"
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+          echo "FILENAME=$FILENAME" >> $GITHUB_ENV
+
+      # 3. Zip the package using the dynamic filename
+      - name: Zip XRNX Package
+        run: |
+          zip -r "${{ env.FILENAME }}" .
+
+      # 4. Create and Push Git Tag
+      - name: Create and Push Tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git tag "$TAG_NAME"
+          git push origin "$TAG_NAME"
+
+      # 5. Create GitHub Release
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          release_name: Release ${{ env.TAG_NAME }}
+          draft: false
+          prerelease: false
+
+      # 6. Upload Release Asset
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ${{ env.FILENAME }}
+          asset_name: ${{ env.FILENAME }}
+          asset_content_type: application/octet-stream
