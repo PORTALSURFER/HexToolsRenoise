@@ -44,13 +44,6 @@ HexTools provides enhanced track navigation, pattern matrix tools, rendering uti
 ### **Rendering**
 1. Select pattern data → Render to new track → Use destructive version to clean up
 
-## Installation
-
-1. Download the latest release
-2. Extract to your Renoise Tools directory
-3. Restart Renoise
-4. Access tools via Tools menu or context menus
-
 ## Support
 
 For issues, feature requests, or contributions, please visit the project repository.
