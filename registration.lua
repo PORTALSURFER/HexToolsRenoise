@@ -353,6 +353,14 @@ function M.register_menu_and_keybindings(handlers)
     name = "Pattern Editor:Tools:Remove Empty Tracks",
     invoke = handlers.remove_empty_tracks
   }
+  renoise.tool():add_keybinding {
+    name = "Pattern Matrix:Tools:Merge Selected Tracks",
+    invoke = handlers.merge_selected_pattern_matrix_tracks
+  }
+  renoise.tool():add_keybinding {
+    name = "Pattern Matrix:Tools:Merge Selected Tracks Destructive",
+    invoke = handlers.merge_selected_pattern_matrix_tracks_destructive
+  }
 
   -- Pattern Editor Menu Entries
   renoise.tool():add_menu_entry{
@@ -386,6 +394,14 @@ function M.register_menu_and_keybindings(handlers)
   renoise.tool():add_menu_entry{
     name = "Pattern Matrix:Solo Selected Tracks",
     invoke = handlers.solo_selected_pattern_matrix_tracks
+  }
+  renoise.tool():add_menu_entry{
+    name = "Pattern Matrix:Merge Selected Tracks",
+    invoke = handlers.merge_selected_pattern_matrix_tracks
+  }
+  renoise.tool():add_menu_entry{
+    name = "Pattern Matrix:Merge Selected Tracks Destructive",
+    invoke = handlers.merge_selected_pattern_matrix_tracks_destructive
   }
 
   -- Instrument Box Menu Entry

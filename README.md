@@ -62,6 +62,15 @@ HexTools adds the following utilities and workflow enhancements to Renoise:
   - Select multiple pattern matrix slots across different tracks
   - Automatically mutes all other tracks and solos the selected tracks
   - Accessible via Pattern Matrix menu or keybinding
+- **Pattern Matrix Track Merge**: Render selected tracks to new tracks with C-4 notes
+  - Select multiple pattern matrix slots across different tracks
+  - Renders audio from selected tracks for each pattern to a new track
+  - Places C-4 note at the start of each new track with autoseek enabled
+  - Accessible via Pattern Matrix menu or keybinding
+- **Pattern Matrix Track Merge Destructive**: Same as merge but removes source tracks
+  - Performs the same merge operation as above
+  - Additionally removes the source tracks after rendering
+  - Useful for cleaning up after merging
 
 ### **Rendering & Playback**
 - **Render Selection to New Track**: Renders the current pattern selection to a new instrument and track, inserting a C-4 note. Optionally, the original selection can be cleared (destructive render).
@@ -137,3 +146,5 @@ All features below can be mapped to custom keys in Renoise via the Preferences >
 - `Pattern Editor:Tools:Jump To Previous Track (With Solo)`
 - `Pattern Editor:Tools:Color Selected Pattern Slots`
 - `Pattern Matrix:Tools:Solo Selected Tracks`
+- `Pattern Matrix:Tools:Merge Selected Tracks`
+- `Pattern Matrix:Tools:Merge Selected Tracks Destructive`
