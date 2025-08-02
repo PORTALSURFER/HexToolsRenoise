@@ -1,8 +1,8 @@
 # HexTools for Renoise
 
 **Author:** Hex  
-**Version:** v0.4.0  
-**Latest Release:** [v0.4.0](https://github.com/hex/HexTools/releases/tag/v0.4.0)
+**Version:** v0.7.0  
+**Latest Release:** [v0.7.0](https://github.com/hex/HexTools/releases/tag/v0.7.0)
 
 Collection of useful tools for the Renoise digital audio workstation.
 
@@ -21,7 +21,7 @@ HexTools provides enhanced track navigation, pattern matrix tools, rendering uti
 - **[📖 Complete Documentation](documentation.md)** - Detailed feature descriptions and usage guides
 - **[📝 Changelog](CHANGELOG.md)** - Version history and detailed updates
 
-## Recent Updates (v0.4.0)
+## Recent Updates (v0.7.0)
 
 ### **New Features**
 - **Track-Level Alias Detection**: Advanced optimization for Pattern Matrix merge operations

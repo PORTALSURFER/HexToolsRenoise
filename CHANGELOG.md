@@ -2,6 +2,20 @@
 
 All notable changes to HexTools will be documented in this file.
 
+## [0.7.0] - 2024
+
+### Added
+- **Release Package Optimization**: Improved GitHub Actions workflow to exclude development files
+  - Excludes .github, .vscode, and resources folders from release packages
+  - Excludes .cursorrules, .gitignore, and AGENTS.md files from release packages
+  - Creates cleaner, more focused release packages for end users
+  - Uses rsync with explicit exclusions for precise file control
+
+### Technical
+- **Enhanced Release Process**: Replaced git archive with rsync-based packaging
+- **Improved File Filtering**: Selective file inclusion for optimized package sizes
+- **Better Development Workflow**: Development files no longer included in user releases
+
 ## [0.4.0] - 2024
 
 ### Added
