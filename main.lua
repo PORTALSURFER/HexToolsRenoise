@@ -875,39 +875,9 @@ local function merge_selected_pattern_matrix_tracks_destructive()
     if current_pattern_index > #patterns_array then
       -- All patterns rendered, now delete patterns from source tracks
       local deleted_patterns_count = 0
-      local debug_messages = {} -- Collect debug messages for dialog
-      
-      local function add_debug(msg)
-        table.insert(debug_messages, msg)
-        -- Limit debug messages to prevent excessive memory usage
-        if #debug_messages > 200 then
-          -- Keep only the last 150 messages and add a truncation notice
-          local truncated_messages = {}
-          for i = #debug_messages - 149, #debug_messages do
-            table.insert(truncated_messages, debug_messages[i])
-          end
-          debug_messages = truncated_messages
-          table.insert(debug_messages, 1, "-- Debug messages truncated (too many) --")
-        end
-      end
-      
-      add_debug(string.format("DEBUG: Starting destructive merge process"))
-      -- Convert source tracks table keys to array for display
-      local source_track_list = {}
-      for track_idx in pairs(source_tracks) do
-        table.insert(source_track_list, tostring(track_idx))
-      end
-      add_debug(string.format("DEBUG: Source tracks: %s", table.concat(source_track_list, ", ")))
-      add_debug(string.format("DEBUG: Target track: %d", new_track_idx))
       
       -- Delete the patterns from the source tracks
       for track_idx, patterns in pairs(patterns_to_delete) do
-        local pattern_count = 0
-        for pattern_idx in pairs(patterns) do
-          pattern_count = pattern_count + 1
-        end
-        add_debug(string.format("DEBUG: Track %d has %d patterns to delete", track_idx, pattern_count))
-        
         for pattern_idx in pairs(patterns) do
           -- Delete the pattern from this track
           local pattern = song:pattern(pattern_idx)
@@ -923,23 +893,16 @@ local function merge_selected_pattern_matrix_tracks_destructive()
         end
       end
       
-      add_debug(string.format("DEBUG: Deleted %d patterns total", deleted_patterns_count))
-      
       -- Now test which source tracks became empty after the merge
       local tracks_to_remove = {}
       
       for track_idx in pairs(source_tracks) do
         -- Skip the target track - it should never be deleted
         if track_idx == new_track_idx then
-          add_debug(string.format("DEBUG: Skipping target track %d (should never be deleted)", track_idx))
           goto continue
         end
         
         local track_is_empty = true
-        local patterns_checked = 0
-        local patterns_skipped = 0
-        
-        add_debug(string.format("DEBUG: Checking track %d for emptiness", track_idx))
         
         -- Check if this track has any content at all after pattern deletion
         -- Only check patterns that were NOT deleted from this track
@@ -948,17 +911,11 @@ local function merge_selected_pattern_matrix_tracks_destructive()
           
           -- Skip this pattern if it was deleted from this track
           if patterns_to_delete[track_idx] and patterns_to_delete[track_idx][actual_pattern_index] then
-            patterns_skipped = patterns_skipped + 1
-            add_debug(string.format("DEBUG: Track %d - Skipping pattern %d (was deleted)", track_idx, actual_pattern_index))
             goto continue_pattern_check
           end
           
           local pattern = song:pattern(actual_pattern_index)
           local track = pattern:track(track_idx)
-          
-          -- Check if this pattern has any content in this track
-          patterns_checked = patterns_checked + 1
-          add_debug(string.format("DEBUG: Track %d - Checking pattern %d", track_idx, actual_pattern_index))
           
           for line_idx = 1, pattern.number_of_lines do
             local line = track:line(line_idx)
@@ -975,12 +932,7 @@ local function merge_selected_pattern_matrix_tracks_destructive()
               
               if (note_value ~= 0 or instrument_value ~= 0 or volume_value ~= 0) and not is_special_note then
                 track_is_empty = false
-                add_debug(string.format("DEBUG: Track %d - Found content in pattern %d, line %d, column %d (note: %d, instrument: %d, volume: %d)", 
-                  track_idx, actual_pattern_index, line_idx, col_idx, note_value, instrument_value, volume_value))
                 break
-              elseif is_special_note then
-                add_debug(string.format("DEBUG: Track %d - Ignoring special note in pattern %d, line %d, column %d (note: %d, instrument: %d, volume: %d)", 
-                  track_idx, actual_pattern_index, line_idx, col_idx, note_value, instrument_value, volume_value))
               end
             end
             if not track_is_empty then break end
@@ -990,22 +942,15 @@ local function merge_selected_pattern_matrix_tracks_destructive()
           ::continue_pattern_check::
         end
         
-        add_debug(string.format("DEBUG: Track %d - Checked %d patterns, skipped %d patterns", track_idx, patterns_checked, patterns_skipped))
-        
         -- If track is empty after deletion, mark it for removal
         if track_is_empty then
           table.insert(tracks_to_remove, track_idx)
-          add_debug(string.format("DEBUG: Track %d is empty after deletion - will be removed", track_idx))
-        else
-          add_debug(string.format("DEBUG: Track %d still has content - will be kept", track_idx))
         end
         ::continue::
       end
       
       -- Remove empty tracks (in reverse order to maintain indices)
       table.sort(tracks_to_remove, function(a, b) return a > b end)
-      
-      add_debug(string.format("DEBUG: About to remove %d empty tracks: %s", #tracks_to_remove, table.concat(tracks_to_remove, ", ")))
       
       -- Calculate how many tracks will be deleted before the target track
       local tracks_deleted_before_target = 0
@@ -1015,10 +960,7 @@ local function merge_selected_pattern_matrix_tracks_destructive()
         end
       end
       
-      add_debug(string.format("DEBUG: Will delete %d tracks before target track %d", tracks_deleted_before_target, new_track_idx))
-      
       for _, track_idx in ipairs(tracks_to_remove) do
-        add_debug(string.format("DEBUG: Deleting track %d", track_idx))
         song:delete_track_at(track_idx)
       end
       
@@ -1031,31 +973,6 @@ local function merge_selected_pattern_matrix_tracks_destructive()
       
       -- Update new_track_idx to account for track deletions
       new_track_idx = adjusted_target_track_idx
-      
-      add_debug(string.format("DEBUG: Final result - Merged %d unique patterns to new track, deleted %d patterns, and removed %d empty tracks (target track: %d -> %d)", 
-        rendered_count, deleted_patterns_count, #tracks_to_remove, new_track_idx, adjusted_target_track_idx))
-      
-      -- Show debug dialog
-      local vb = renoise.ViewBuilder()
-      local debug_text = table.concat(debug_messages, "\n")
-      
-      -- Limit debug text size to prevent dialog from becoming too large
-      local max_debug_length = 10000  -- Limit to 10k characters
-      if #debug_text > max_debug_length then
-        debug_text = string.sub(debug_text, 1, max_debug_length) .. "\n\n... (truncated - too much debug info)"
-      end
-      
-      local dialog_content = vb:column {
-        vb:text { text = "Debug Information:" },
-        vb:text { text = debug_text, width = 600, height = 300 },
-        vb:button {
-          text = "OK",
-          notifier = function()
-            -- Dialog will close automatically
-          end
-        }
-      }
-      renoise.app():show_custom_dialog("Merge Debug Info", dialog_content)
       
       renoise.app():show_status(string.format("Merged %d unique patterns to new track, deleted %d patterns, and removed %d empty tracks", 
         rendered_count, deleted_patterns_count, #tracks_to_remove))
