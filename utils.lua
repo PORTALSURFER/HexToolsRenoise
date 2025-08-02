@@ -1,6 +1,6 @@
 local M = {}
 
-M.DEBUG = false
+M.DEBUG = true
 
 function M.debug_messagebox(msg)
   if M.DEBUG then
@@ -281,6 +281,149 @@ M.jump_to_next_track     = jump_to_next_active_track
 M.jump_to_previous_track = jump_to_previous_active_track
 
 ----------------------------------------------------------------------
+-- new track navigation functions
+----------------------------------------------------------------------
+local function move_to_next_track_skip_collapsed()
+  local song = renoise.song()
+  if auto_collapse_before_jump and not is_pattern_collapsed() then
+    collapse_null_tracks_in_pattern()
+  end
+
+  local cur  = song.selected_track_index
+  local tot  = #song.tracks
+
+  if last_jumped_track and last_jumped_track == cur then
+    handle_leaving_focused_track()
+  end
+
+  for i = cur + 1, tot do
+    local tr = song.tracks[i]
+    if tr.type == renoise.Track.TRACK_TYPE_SEQUENCER and not is_track_collapsed(i) then
+      song.selected_track_index = i
+      pattern_collapsed_state[song.selected_pattern_index] = false
+      return
+    end
+  end
+  for i = 1, cur - 1 do
+    local tr = song.tracks[i]
+    if tr.type == renoise.Track.TRACK_TYPE_SEQUENCER and not is_track_collapsed(i) then
+      song.selected_track_index = i
+      pattern_collapsed_state[song.selected_pattern_index] = false
+      return
+    end
+  end
+end
+
+local function jump_to_previous_track_with_solo()
+  local song = renoise.song()
+  if auto_collapse_before_jump and not is_pattern_collapsed() then
+    collapse_null_tracks_in_pattern()
+  end
+
+  local cur = song.selected_track_index
+  local tot = #song.tracks
+
+  if last_jumped_track and last_jumped_track == cur then
+    handle_leaving_focused_track()
+  end
+
+  -- First, mute all tracks
+  for i = 1, #song.tracks do
+    local track = song.tracks[i]
+    if track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
+      track.mute_state = renoise.Track.MUTE_STATE_MUTED
+    end
+  end
+
+  -- Find the previous track and solo it
+  for i = cur - 1, 1, -1 do
+    local tr = song.tracks[i]
+    if tr.type == renoise.Track.TRACK_TYPE_SEQUENCER and not is_track_collapsed(i) then
+      song.selected_track_index = i
+      tr.mute_state = renoise.Track.MUTE_STATE_ACTIVE
+      pattern_collapsed_state[song.selected_pattern_index] = false
+      renoise.app():show_status(string.format("Jumped to track %d and soloed it", i))
+      return
+    end
+  end
+  for i = tot, cur + 1, -1 do
+    local tr = song.tracks[i]
+    if tr.type == renoise.Track.TRACK_TYPE_SEQUENCER and not is_track_collapsed(i) then
+      song.selected_track_index = i
+      tr.mute_state = renoise.Track.MUTE_STATE_ACTIVE
+      pattern_collapsed_state[song.selected_pattern_index] = false
+      renoise.app():show_status(string.format("Jumped to track %d and soloed it", i))
+      return
+    end
+  end
+  
+  -- If no track found, unmute all tracks
+  for i = 1, #song.tracks do
+    local track = song.tracks[i]
+    if track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
+      track.mute_state = renoise.Track.MUTE_STATE_ACTIVE
+    end
+  end
+  renoise.app():show_status("No previous track found")
+end
+
+local function jump_to_next_track_with_solo()
+  local song = renoise.song()
+  if auto_collapse_before_jump and not is_pattern_collapsed() then
+    collapse_null_tracks_in_pattern()
+  end
+
+  local cur  = song.selected_track_index
+  local tot  = #song.tracks
+
+  if last_jumped_track and last_jumped_track == cur then
+    handle_leaving_focused_track()
+  end
+
+  -- First, mute all tracks
+  for i = 1, #song.tracks do
+    local track = song.tracks[i]
+    if track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
+      track.mute_state = renoise.Track.MUTE_STATE_MUTED
+    end
+  end
+
+  -- Find the next track and solo it
+  for i = cur + 1, tot do
+    local tr = song.tracks[i]
+    if tr.type == renoise.Track.TRACK_TYPE_SEQUENCER and not is_track_collapsed(i) then
+      song.selected_track_index = i
+      tr.mute_state = renoise.Track.MUTE_STATE_ACTIVE
+      pattern_collapsed_state[song.selected_pattern_index] = false
+      renoise.app():show_status(string.format("Jumped to track %d and soloed it", i))
+      return
+    end
+  end
+  for i = 1, cur - 1 do
+    local tr = song.tracks[i]
+    if tr.type == renoise.Track.TRACK_TYPE_SEQUENCER and not is_track_collapsed(i) then
+      song.selected_track_index = i
+      tr.mute_state = renoise.Track.MUTE_STATE_ACTIVE
+      pattern_collapsed_state[song.selected_pattern_index] = false
+      renoise.app():show_status(string.format("Jumped to track %d and soloed it", i))
+      return
+    end
+  end
+  
+  -- If no track found, unmute all tracks
+  for i = 1, #song.tracks do
+    local track = song.tracks[i]
+    if track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
+      track.mute_state = renoise.Track.MUTE_STATE_ACTIVE
+    end
+  end
+  renoise.app():show_status("No next track found")
+end
+
+M.jump_to_next_track_with_solo = jump_to_next_track_with_solo
+M.jump_to_previous_track_with_solo = jump_to_previous_track_with_solo
+
+----------------------------------------------------------------------
 -- null track navigation
 ----------------------------------------------------------------------
 local function focus_and_select_track(track_idx)
@@ -414,6 +557,103 @@ end
 M.toggle_auto_collapse_before_jump = toggle_auto_collapse_before_jump
 M.toggle_auto_collapse_on_focus_loss = toggle_auto_collapse_on_focus_loss
 M.is_pattern_collapsed             = is_pattern_collapsed
+
+-- Function to check if a track has any note information
+local function track_has_notes(track_idx)
+  local song = renoise.song()
+  local sequencer = song.sequencer
+  
+  -- Check all patterns in the sequence
+  for seq_idx = 1, #sequencer.pattern_sequence do
+    local pattern_index = sequencer:pattern(seq_idx)
+    local pattern = song:pattern(pattern_index)
+    if pattern then
+      local track = pattern:track(track_idx)
+      if track then
+        -- Check if track is not empty
+        if not track.is_empty then
+          return true
+        end
+      end
+    end
+  end
+  return false
+end
+
+-- Function to find and remove tracks with no note information
+local function remove_empty_tracks()
+  local song = renoise.song()
+  local tracks_to_remove = {}
+  
+  -- Find tracks with no notes
+  for track_idx = #song.tracks, 1, -1 do
+    local track = song.tracks[track_idx]
+    if track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
+      if not track_has_notes(track_idx) then
+        table.insert(tracks_to_remove, track_idx)
+      end
+    end
+  end
+  
+  if #tracks_to_remove == 0 then
+    renoise.app():show_status("No empty tracks found to remove")
+    return
+  end
+  
+  -- Confirm with user
+  local message = string.format("Found %d empty tracks. Remove them?", #tracks_to_remove)
+  local result = renoise.app():show_prompt("Remove Empty Tracks", message, {"Cancel", "Remove"})
+  
+  if result == "Remove" then
+    -- Remove tracks from highest index to lowest to avoid index shifting issues
+    for _, track_idx in ipairs(tracks_to_remove) do
+      song:delete_track_at(track_idx)
+    end
+    
+    renoise.app():show_status(string.format("Removed %d empty tracks", #tracks_to_remove))
+  else
+    renoise.app():show_status("Operation cancelled")
+  end
+end
+
+M.remove_empty_tracks = remove_empty_tracks
+
+-- Function to jump 1/4th up in the current pattern
+local function jump_quarter_up()
+  local song = renoise.song()
+  local pattern = song:pattern(song.selected_pattern_index)
+  local current_line = song.selected_line_index
+  local pattern_length = pattern.number_of_lines
+  local quarter_length = math.floor(pattern_length / 4)
+  
+  local new_line = current_line - quarter_length
+  if new_line < 1 then
+    new_line = 1
+  end
+  
+  song.selected_line_index = new_line
+  renoise.app():show_status(string.format("Jumped 1/4th up: line %d", new_line))
+end
+
+-- Function to jump 1/4th down in the current pattern
+local function jump_quarter_down()
+  local song = renoise.song()
+  local pattern = song:pattern(song.selected_pattern_index)
+  local current_line = song.selected_line_index
+  local pattern_length = pattern.number_of_lines
+  local quarter_length = math.floor(pattern_length / 4)
+  
+  local new_line = current_line + quarter_length
+  if new_line > pattern_length then
+    new_line = pattern_length
+  end
+  
+  song.selected_line_index = new_line
+  renoise.app():show_status(string.format("Jumped 1/4th down: line %d", new_line))
+end
+
+M.jump_quarter_up = jump_quarter_up
+M.jump_quarter_down = jump_quarter_down
 
 return M
 

@@ -17,16 +17,17 @@ function M.render_selection_to_new_track(destructive)
     original_mute_states[i] = song.tracks[i].mute_state
   end
 
-  -- Determine the source track from selection (not cursor position)
-  local source_track_idx = sel.start_track or song.selected_track_index
+  -- Determine the source tracks from selection (not cursor position)
+  local start_track_idx = sel.start_track or song.selected_track_index
+  local end_track_idx = sel.end_track or song.selected_track_index
 
-  -- Mute all tracks except the selected one
+  -- Mute all tracks except the selected ones
   for i = 1, #song.tracks do
     local track = song.tracks[i]
     -- Skip master track as it cannot be muted
     if track.type == renoise.Track.TRACK_TYPE_MASTER then
       -- Keep master track as is
-    elseif i == source_track_idx then
+    elseif i >= start_track_idx and i <= end_track_idx then
       track.mute_state = renoise.Track.MUTE_STATE_ACTIVE
     else
       track.mute_state = renoise.Track.MUTE_STATE_MUTED
@@ -57,15 +58,19 @@ function M.render_selection_to_new_track(destructive)
     local new_instr_idx = song.selected_instrument_index + 1
     local instr = song:insert_instrument_at(new_instr_idx)
     instr:insert_sample_at(1)
-    instr:sample(1).sample_buffer:load_from(temp_file)
+    local sample = instr:sample(1)
+    sample.sample_buffer:load_from(temp_file)
+    
+    -- Enable autoseek for the rendered sample
+    sample.autoseek = true
     
     -- Apply 6dB boost by setting instrument volume to maximum (approximately 6dB boost)
     instr.volume = 1.99526
     
     os.remove(temp_file)
 
-    -- 2. Create a new track to the right of the source track
-    local new_track_idx = source_track_idx + 1
+    -- 2. Create a new track to the right of the last selected track
+    local new_track_idx = end_track_idx + 1
     song:insert_track_at(new_track_idx)
 
     -- 3. Add a C-4 note with full velocity at the top of the selection
@@ -82,22 +87,25 @@ function M.render_selection_to_new_track(destructive)
 
     -- 5. Optionally cut (clear) all note/effect data in the original selection
     if destructive then
-      local orig_track = pattern:track(source_track_idx) -- Use source track from selection
-      for l = sel.start_line, sel.end_line do
-        local orig_line = orig_track:line(l)
-        for nc = 1, #orig_line.note_columns do
-          orig_line:note_column(nc):clear()
+      -- Clear all tracks in the selection range
+      for track_idx = start_track_idx, end_track_idx do
+        local orig_track = pattern:track(track_idx)
+        for l = sel.start_line, sel.end_line do
+          local orig_line = orig_track:line(l)
+          for nc = 1, #orig_line.note_columns do
+            orig_line:note_column(nc):clear()
+          end
+          for ec = 1, #orig_line.effect_columns do
+            orig_line:effect_column(ec):clear()
+          end
         end
-        for ec = 1, #orig_line.effect_columns do
-          orig_line:effect_column(ec):clear()
-        end
+        -- Add an 'off' note at the top of each cleared track
+        local orig_line = orig_track:line(sel.start_line)
+        orig_line:note_column(1).note_value = 121 -- OFF note
+        orig_line:note_column(1).instrument_value = 255 -- No instrument
+        orig_line:note_column(1).volume_value = 255 -- No volume
       end
-      -- Add an 'off' note at the top of the original selection
-      local orig_line = orig_track:line(sel.start_line)
-      orig_line:note_column(1).note_value = 121 -- OFF note
-      orig_line:note_column(1).instrument_value = 255 -- No instrument
-      orig_line:note_column(1).volume_value = 255 -- No volume
-      renoise.app():show_status("Rendered selection, added new note, cut original selection, and added OFF note")
+      renoise.app():show_status(string.format("Rendered selection from tracks %d-%d, added new note, cut original selection, and added OFF notes", start_track_idx, end_track_idx))
     else
       renoise.app():show_status("Rendered selection to new instrument and added C-4 note in new track")
     end
@@ -120,16 +128,17 @@ function M.render_selection_to_next_track(destructive)
     original_mute_states[i] = song.tracks[i].mute_state
   end
 
-  -- Determine the source track from selection (not cursor position)
-  local source_track_idx = sel.start_track or song.selected_track_index
+  -- Determine the source tracks from selection (not cursor position)
+  local start_track_idx = sel.start_track or song.selected_track_index
+  local end_track_idx = sel.end_track or song.selected_track_index
 
-  -- Mute all tracks except the selected one
+  -- Mute all tracks except the selected ones
   for i = 1, #song.tracks do
     local track = song.tracks[i]
     -- Skip master track as it cannot be muted
     if track.type == renoise.Track.TRACK_TYPE_MASTER then
       -- Keep master track as is
-    elseif i == source_track_idx then
+    elseif i >= start_track_idx and i <= end_track_idx then
       track.mute_state = renoise.Track.MUTE_STATE_ACTIVE
     else
       track.mute_state = renoise.Track.MUTE_STATE_MUTED
@@ -147,7 +156,7 @@ function M.render_selection_to_next_track(destructive)
     sample_rate = 48000
   }
 
-  local next_track_idx = source_track_idx + 1
+  local next_track_idx = end_track_idx + 1
   if next_track_idx > #song.tracks then
     -- Restore original mute states before returning
     for i = 1, #song.tracks do
@@ -167,7 +176,11 @@ function M.render_selection_to_next_track(destructive)
     local new_instr_idx = song.selected_instrument_index + 1
     local instr = song:insert_instrument_at(new_instr_idx)
     instr:insert_sample_at(1)
-    instr:sample(1).sample_buffer:load_from(temp_file)
+    local sample = instr:sample(1)
+    sample.sample_buffer:load_from(temp_file)
+    
+    -- Enable autoseek for the rendered sample
+    sample.autoseek = true
     
     -- Apply 6dB boost by setting instrument volume to 2.0 (6dB = 20*log10(2))
     instr.volume = 2.0
@@ -188,22 +201,25 @@ function M.render_selection_to_next_track(destructive)
 
     -- 4. Optionally cut (clear) all note/effect data in the original selection
     if destructive then
-      local orig_track = pattern:track(source_track_idx) -- Use source track from selection
-      for l = sel.start_line, sel.end_line do
-        local orig_line = orig_track:line(l)
-        for nc = 1, #orig_line.note_columns do
-          orig_line:note_column(nc):clear()
+      -- Clear all tracks in the selection range
+      for track_idx = start_track_idx, end_track_idx do
+        local orig_track = pattern:track(track_idx)
+        for l = sel.start_line, sel.end_line do
+          local orig_line = orig_track:line(l)
+          for nc = 1, #orig_line.note_columns do
+            orig_line:note_column(nc):clear()
+          end
+          for ec = 1, #orig_line.effect_columns do
+            orig_line:effect_column(ec):clear()
+          end
         end
-        for ec = 1, #orig_line.effect_columns do
-          orig_line:effect_column(ec):clear()
-        end
+        -- Add an 'off' note at the top of each cleared track
+        local orig_line = orig_track:line(sel.start_line)
+        orig_line:note_column(1).note_value = 121 -- OFF note
+        orig_line:note_column(1).instrument_value = 255 -- No instrument
+        orig_line:note_column(1).volume_value = 255 -- No volume
       end
-      -- Add an 'off' note at the top of the original selection
-      local orig_line = orig_track:line(sel.start_line)
-      orig_line:note_column(1).note_value = 121 -- OFF note
-      orig_line:note_column(1).instrument_value = 255 -- No instrument
-      orig_line:note_column(1).volume_value = 255 -- No volume
-      renoise.app():show_status("Rendered selection, added new note to next track, cut original selection, and added OFF note")
+      renoise.app():show_status(string.format("Rendered selection from tracks %d-%d, added new note to next track, cut original selection, and added OFF notes", start_track_idx, end_track_idx))
     else
       renoise.app():show_status("Rendered selection to new instrument and added C-4 note in next track")
     end
@@ -352,6 +368,274 @@ function M.sample_and_merge_track_notes()
   local status_msg = string.format("Merged %d notes and %d effects from track %d to track %d", 
     merged_count, merged_effects_count, source_track_idx, target_track_idx)
   renoise.app():show_status(status_msg)
+end
+
+-- Custom clipboard for storing rendered samples
+local sample_clipboard = {
+  file_path = nil,
+  instrument_index = nil,
+  sample_index = nil
+}
+
+-- Render the current pattern selection to a sample and store it in custom clipboard
+function M.render_selection_to_copy_buffer()
+  local song = renoise.song()
+  local sel = song.selection_in_pattern
+
+  if not sel then
+    renoise.app():show_status("Nothing selected to render")
+    return
+  end
+
+  -- Store original mute states
+  local original_mute_states = {}
+  for i = 1, #song.tracks do
+    original_mute_states[i] = song.tracks[i].mute_state
+  end
+
+  -- Determine the source track from selection (not cursor position)
+  local source_track_idx = sel.start_track or song.selected_track_index
+
+  -- Mute all tracks except the selected one
+  for i = 1, #song.tracks do
+    local track = song.tracks[i]
+    -- Skip master track as it cannot be muted
+    if track.type == renoise.Track.TRACK_TYPE_MASTER then
+      -- Keep master track as is
+    elseif i == source_track_idx then
+      track.mute_state = renoise.Track.MUTE_STATE_ACTIVE
+    else
+      track.mute_state = renoise.Track.MUTE_STATE_MUTED
+    end
+  end
+
+  local start_pos = renoise.SongPos(song.selected_sequence_index, sel.start_line)
+  local end_pos = renoise.SongPos(song.selected_sequence_index, sel.end_line)
+  local temp_file = os.tmpname() .. ".wav"
+
+  local options = {
+    start_pos = start_pos,
+    end_pos = end_pos,
+    bit_depth = 16,
+    channels = 2,
+    priority = "high",
+    interpolation = "precise",
+    sample_rate = 48000
+  }
+
+  song:render(options, temp_file, function()
+    -- Restore original mute states
+    for i = 1, #song.tracks do
+      song.tracks[i].mute_state = original_mute_states[i]
+    end
+
+    -- Create a temporary instrument to hold the sample
+    local temp_instr_idx = song.selected_instrument_index + 1
+    local temp_instr = song:insert_instrument_at(temp_instr_idx)
+    temp_instr:insert_sample_at(1)
+    local sample = temp_instr:sample(1)
+    sample.sample_buffer:load_from(temp_file)
+    
+    -- Enable autoseek for the rendered sample
+    sample.autoseek = true
+    
+    -- Apply 6dB boost by setting instrument volume to maximum (approximately 6dB boost)
+    temp_instr.volume = 1.99526
+    
+    -- Store the sample data in our custom clipboard
+    local sample = temp_instr:sample(1)
+    if sample and sample.sample_buffer then
+      -- Copy the temporary file to a persistent clipboard file
+      local clipboard_file = os.tmpname() .. "_clipboard_sample.wav"
+      
+      -- Use a simple file copy approach since save_to doesn't exist
+      local input_file = io.open(temp_file, "rb")
+      local output_file = io.open(clipboard_file, "wb")
+      
+      if input_file and output_file then
+        local content = input_file:read("*all")
+        output_file:write(content)
+        input_file:close()
+        output_file:close()
+        
+        -- Store the clipboard data
+        sample_clipboard.file_path = clipboard_file
+        sample_clipboard.instrument_index = temp_instr_idx
+        sample_clipboard.sample_index = 1
+        
+        -- Select the instrument for the user
+        song.selected_instrument_index = temp_instr_idx - 1 -- 0-based index
+        
+        renoise.app():show_status("Sample copied to clipboard! Use 'Paste Sample from Clipboard' to paste it into any instrument.")
+      else
+        renoise.app():show_status("Failed to copy sample to clipboard")
+      end
+      
+      -- Clean up the original temporary file
+      os.remove(temp_file)
+    else
+      -- Remove the temporary instrument if we failed to create the sample
+      song:delete_instrument_at(temp_instr_idx)
+      os.remove(temp_file)
+      renoise.app():show_status("Failed to render selection to sample")
+    end
+  end)
+end
+
+-- Paste the stored sample from clipboard into the selected instrument
+function M.paste_sample_from_clipboard()
+  local song = renoise.song()
+  
+  if not sample_clipboard.file_path or not sample_clipboard.instrument_index then
+    renoise.app():show_status("No sample in clipboard. Use 'Render Selection To Copy Buffer' first.")
+    return
+  end
+  
+  -- Check if the clipboard file still exists
+  local file = io.open(sample_clipboard.file_path, "r")
+  if not file then
+    renoise.app():show_status("Clipboard sample file not found. Please render again.")
+    return
+  end
+  file:close()
+  
+  -- Get the currently selected instrument
+  local target_instr_idx = song.selected_instrument_index + 1 -- Convert to 1-based
+  local target_instr = song:instrument(target_instr_idx)
+  
+  if not target_instr then
+    renoise.app():show_status("No instrument selected")
+    return
+  end
+  
+  -- Get the current number of samples
+  local current_sample_count = #target_instr.samples
+  
+  -- Insert a new sample at the end
+  target_instr:insert_sample_at(current_sample_count + 1)
+  
+  -- Get the new sample count after insertion
+  local new_sample_count = #target_instr.samples
+  
+  -- Check if a new sample was actually created
+  if new_sample_count > current_sample_count then
+    -- Access the newly created sample (it should be the last one)
+    local new_sample = target_instr:sample(new_sample_count)
+    
+    if new_sample and new_sample.sample_buffer then
+      -- Load the clipboard sample into the new sample slot
+      new_sample.sample_buffer:load_from(sample_clipboard.file_path)
+      
+      -- Enable autoseek for the pasted sample
+      new_sample.autoseek = true
+      
+      -- Apply the same volume boost as the original
+      target_instr.volume = 1.99526
+      
+      renoise.app():show_status("Sample pasted into instrument " .. target_instr_idx .. " sample " .. new_sample_count)
+    else
+      renoise.app():show_status("Failed to access sample slot in instrument")
+    end
+  else
+    renoise.app():show_status("Failed to create sample slot in instrument")
+  end
+end
+
+-- Clear the clipboard
+function M.clear_sample_clipboard()
+  if sample_clipboard.file_path then
+    -- Try to remove the clipboard file
+    os.remove(sample_clipboard.file_path)
+  end
+  
+  -- Clear the clipboard data
+  sample_clipboard.file_path = nil
+  sample_clipboard.instrument_index = nil
+  sample_clipboard.sample_index = nil
+  
+  renoise.app():show_status("Sample clipboard cleared")
+end
+
+-- Render the current pattern selection to a new sample in the selected instrument
+function M.render_selection_to_instrument_sample()
+  local song = renoise.song()
+  local sel = song.selection_in_pattern
+
+  if not sel then
+    renoise.app():show_status("Nothing selected to render")
+    return
+  end
+
+  -- Get the selected instrument
+  local selected_instr = song:instrument(song.selected_instrument_index)
+  if not selected_instr then
+    renoise.app():show_status("No instrument selected")
+    return
+  end
+
+  -- Store original mute states
+  local original_mute_states = {}
+  for i = 1, #song.tracks do
+    original_mute_states[i] = song.tracks[i].mute_state
+  end
+
+  -- Determine the source tracks from selection (not cursor position)
+  local start_track_idx = sel.start_track or song.selected_track_index
+  local end_track_idx = sel.end_track or song.selected_track_index
+
+  -- Mute all tracks except the selected ones
+  for i = 1, #song.tracks do
+    local track = song.tracks[i]
+    -- Skip master track as it cannot be muted
+    if track.type == renoise.Track.TRACK_TYPE_MASTER then
+      -- Keep master track as is
+    elseif i >= start_track_idx and i <= end_track_idx then
+      track.mute_state = renoise.Track.MUTE_STATE_ACTIVE
+    else
+      track.mute_state = renoise.Track.MUTE_STATE_MUTED
+    end
+  end
+
+  local start_pos = renoise.SongPos(song.selected_sequence_index, sel.start_line)
+  local end_pos = renoise.SongPos(song.selected_sequence_index, sel.end_line)
+  local temp_file = os.tmpname() .. ".wav"
+
+  local options = {
+    start_pos = start_pos,
+    end_pos = end_pos,
+    bit_depth = 16,
+    channels = 2,
+    priority = "high",
+    interpolation = "precise",
+    sample_rate = 48000
+  }
+
+  song:render(options, temp_file, function()
+    -- Restore original mute states
+    for i = 1, #song.tracks do
+      song.tracks[i].mute_state = original_mute_states[i]
+    end
+
+    -- Create a new sample in the selected instrument
+    local new_sample_idx = #selected_instr.samples + 1
+    local new_sample = selected_instr:insert_sample_at(new_sample_idx)
+    
+    -- Load the rendered audio into the new sample
+    new_sample.sample_buffer:load_from(temp_file)
+    
+    -- Enable autoseek for the rendered sample
+    new_sample.autoseek = true
+    
+    -- Set a descriptive name for the sample
+    local sample_name = string.format("Rendered_%d_%d_%d_%d", 
+      song.selected_sequence_index, sel.start_line, sel.end_line, new_sample_idx)
+    new_sample.name = sample_name
+    
+    os.remove(temp_file)
+
+    renoise.app():show_status(string.format("Rendered selection to new sample %d in instrument %d: %s", 
+      new_sample_idx, song.selected_instrument_index, sample_name))
+  end)
 end
 
 return M 

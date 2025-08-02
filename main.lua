@@ -23,6 +23,18 @@ local function render_selection_to_new_track_destructive()
   render_utils.render_selection_to_new_track(true)
 end
 
+local function render_selection_to_copy_buffer()
+  render_utils.render_selection_to_copy_buffer()
+end
+
+local function paste_sample_from_clipboard()
+  render_utils.paste_sample_from_clipboard()
+end
+
+local function clear_sample_clipboard()
+  render_utils.clear_sample_clipboard()
+end
+
 local function render_selection_to_next_track()
   render_utils.render_selection_to_next_track(false)
 end
@@ -82,8 +94,8 @@ local function play_from_buffer()
   navigation_utils.play_from_buffer()
 end
 
-local function jump_to_test_position()
-  navigation_utils.jump_to_test_position()
+local function jump_to_buffered_play_line()
+  navigation_utils.jump_to_buffered_play_line()
 end
 
 local function find_duplicate_single_sample_instruments()
@@ -100,6 +112,10 @@ end
 
 local function remap_selected_notes_to_this()
   instrument_utils.remap_selected_notes_to_this()
+end
+
+local function render_selection_to_instrument_sample()
+  render_utils.render_selection_to_instrument_sample()
 end
 
 local function focus_automation_editor_for_selection()
@@ -142,6 +158,26 @@ local function jump_to_previous_collapsed_track()
   utils.jump_to_previous_collapsed_track()
 end
 
+local function move_to_next_track_skip_collapsed()
+  utils.move_to_next_track_skip_collapsed()
+end
+
+local function jump_to_previous_track_with_solo()
+  utils.jump_to_previous_track_with_solo()
+end
+
+local function jump_to_next_track_with_solo()
+  utils.jump_to_next_track_with_solo()
+end
+
+local function jump_quarter_up()
+  utils.jump_quarter_up()
+end
+
+local function jump_quarter_down()
+  utils.jump_quarter_down()
+end
+
 local pending_return_state = nil
 
 local registration = require("registration")
@@ -160,6 +196,18 @@ end
 
 local function change_lpb()
   pattern_utils.change_lpb()
+end
+
+local function nudge_note_up()
+  pattern_utils.nudge_note_up()
+end
+
+local function nudge_note_down()
+  pattern_utils.nudge_note_down()
+end
+
+local function expand_selection_to_full_pattern()
+  pattern_utils.expand_selection_to_full_pattern()
 end
 
 local function color_selected_pattern_slots()
@@ -241,20 +289,808 @@ local function color_selected_pattern_slots()
     colored_slots, random_color[1], random_color[2], random_color[3]))
 end
 
+local function solo_selected_pattern_matrix_tracks()
+  local song = renoise.song()
+  local sequencer = song.sequencer
+  
+  -- Get the pattern matrix grid selection
+  local selected_slots = {}
+  
+  -- Check each sequence and track for selected slots in the pattern matrix
+  for seq_idx = 1, #sequencer.pattern_sequence do
+    for track_idx = 1, #song.tracks do
+      if sequencer:track_sequence_slot_is_selected(track_idx, seq_idx) then
+        table.insert(selected_slots, {track = track_idx, sequence = seq_idx})
+      end
+    end
+  end
+  
+  if #selected_slots == 0 then
+    renoise.app():show_status("No pattern matrix grid slots selected")
+    return
+  end
+  
+  -- First, mute all tracks
+  for i = 1, #song.tracks do
+    local track = song.tracks[i]
+    if track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
+      track.mute_state = renoise.Track.MUTE_STATE_MUTED
+    end
+  end
+  
+  -- Solo the tracks that have selected slots
+  local soloed_tracks = {}
+  for _, slot in ipairs(selected_slots) do
+    local track = song.tracks[slot.track]
+    if track and track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
+      track.mute_state = renoise.Track.MUTE_STATE_ACTIVE
+      if not soloed_tracks[slot.track] then
+        soloed_tracks[slot.track] = true
+      end
+    end
+  end
+  
+  -- Count unique soloed tracks
+  local soloed_count = 0
+  for _ in pairs(soloed_tracks) do
+    soloed_count = soloed_count + 1
+  end
+  
+  renoise.app():show_status(string.format("Soloed %d tracks from %d selected pattern matrix slots", 
+    soloed_count, #selected_slots))
+end
+
+local function merge_selected_pattern_matrix_tracks()
+  local song = renoise.song()
+  local sequencer = song.sequencer
+  
+  -- Get the pattern matrix grid selection
+  local selected_slots = {}
+  
+  -- Check each sequence and track for selected slots in the pattern matrix
+  for seq_idx = 1, #sequencer.pattern_sequence do
+    for track_idx = 1, #song.tracks do
+      if sequencer:track_sequence_slot_is_selected(track_idx, seq_idx) then
+        table.insert(selected_slots, {track = track_idx, sequence = seq_idx})
+      end
+    end
+  end
+  
+  if #selected_slots == 0 then
+    renoise.app():show_status("No pattern matrix grid slots selected")
+    return
+  end
+  
+  -- Group selected slots by pattern and detect aliases, maintaining sequence order
+  local patterns_to_render = {}
+  local pattern_occurrences = {} -- Track how many times each pattern appears
+  local sequence_order = {} -- Track the order of sequences for sorting
+  
+  for _, slot in ipairs(selected_slots) do
+    local pattern_index = sequencer:pattern(slot.sequence)
+    if not patterns_to_render[pattern_index] then
+      patterns_to_render[pattern_index] = {}
+      pattern_occurrences[pattern_index] = 0
+      -- Track the first sequence position for this pattern
+      sequence_order[pattern_index] = slot.sequence
+    end
+    table.insert(patterns_to_render[pattern_index], slot)
+    pattern_occurrences[pattern_index] = pattern_occurrences[pattern_index] + 1
+  end
+  
+  -- Convert to array for sequential processing, sorted by sequence position
+  local patterns_array = {}
+  for pattern_index, slots in pairs(patterns_to_render) do
+    table.insert(patterns_array, {
+      pattern_index = pattern_index, 
+      slots = slots, 
+      occurrences = pattern_occurrences[pattern_index],
+      sequence_pos = sequence_order[pattern_index]
+    })
+  end
+  
+  -- Sort by sequence position to maintain chronological order
+  table.sort(patterns_array, function(a, b) return a.sequence_pos < b.sequence_pos end)
+  
+  -- Find the highest track index to place new track after
+  local max_track_idx = 0
+  for _, slot in ipairs(selected_slots) do
+    max_track_idx = math.max(max_track_idx, slot.track)
+  end
+  
+  -- Create single new track after the highest selected track
+  local new_track_idx = max_track_idx + 1
+  song:insert_track_at(new_track_idx)
+  
+  local rendered_count = 0
+  local current_pattern_index = 1
+  local rendered_patterns = {} -- Track which patterns have already been rendered
+  local current_instrument_idx = song.selected_instrument_index + 1
+  local previous_track_combination = nil -- Track the previous track combination
+  local previous_instrument_idx = nil -- Track the instrument for the previous track combination
+  local previous_pattern_index = nil -- Track the previous pattern index
+  
+  local function render_next_pattern()
+    if current_pattern_index > #patterns_array then
+      -- All patterns rendered
+      renoise.app():show_status(string.format("Merged %d unique patterns to new track", rendered_count))
+      return
+    end
+    
+    local pattern_data = patterns_array[current_pattern_index]
+    local pattern_index = pattern_data.pattern_index
+    local slots = pattern_data.slots
+    local occurrences = pattern_data.occurrences
+    
+    -- Check if any of the selected tracks have notes for this pattern
+    local has_notes = false
+    local tracks_with_notes = {}
+    local tracks_without_notes = {}
+    
+    for _, slot in ipairs(slots) do
+      -- Get the pattern that corresponds to this sequence slot
+      local sequence_pattern_index = sequencer:pattern(slot.sequence)
+      local pattern = song:pattern(sequence_pattern_index)
+      local track = pattern:track(slot.track)
+      local track_name = song.tracks[slot.track].name
+      
+      -- Check all lines in this track
+      local track_has_notes = false
+      for line_idx = 1, pattern.number_of_lines do
+        local line = track:line(line_idx)
+        local note_value = line:note_column(1).note_value
+        local instrument_value = line:note_column(1).instrument_value
+        local volume_value = line:note_column(1).volume_value
+        
+        -- Filter out special Renoise note values (like 121 for stop notes, etc.)
+        -- Only count actual musical notes (1-120 for MIDI notes)
+        if note_value ~= 0 and note_value >= 1 and note_value <= 120 then
+          track_has_notes = true
+          has_notes = true
+          table.insert(tracks_with_notes, slot.track)
+          break
+        end
+      end
+      
+      if not track_has_notes then
+        table.insert(tracks_without_notes, slot.track)
+      end
+      
+      if has_notes then break end
+    end
+    
+    if not has_notes then
+      -- Skip this pattern and move to next
+      current_pattern_index = current_pattern_index + 1
+      render_next_pattern()
+      return
+    end
+    
+    -- Check if this pattern has already been rendered (alias pattern)
+    if rendered_patterns[pattern_index] then
+      -- Pattern already rendered, just add C-4 notes for each occurrence
+      local existing_instrument_idx = rendered_patterns[pattern_index]
+      
+      -- Add C-4 notes for each occurrence of this pattern
+      for i = 1, occurrences do
+        local new_pattern = song:pattern(pattern_index)
+        local new_track = new_pattern:track(new_track_idx)
+        local line = new_track:line(1)
+        line:note_column(1).note_value = 48 -- C-4
+        line:note_column(1).instrument_value = existing_instrument_idx - 1 -- 0-based
+        line:note_column(1).volume_value = 0xFF -- full velocity (255 in hex)
+      end
+      
+      -- Move to next pattern
+      current_pattern_index = current_pattern_index + 1
+      render_next_pattern()
+      return
+    end
+    
+    -- Check if this track combination is identical to the previous one (track-level alias)
+    local current_track_combination = {}
+    for _, slot in ipairs(slots) do
+      table.insert(current_track_combination, slot.track)
+    end
+    table.sort(current_track_combination) -- Sort for consistent comparison
+    
+    if previous_track_combination and previous_instrument_idx and previous_pattern_index then
+      -- Compare track combinations
+      local tracks_match = true
+      if #current_track_combination ~= #previous_track_combination then
+        tracks_match = false
+      else
+        for i = 1, #current_track_combination do
+          if current_track_combination[i] ~= previous_track_combination[i] then
+            tracks_match = false
+            break
+          end
+        end
+      end
+      
+      -- If tracks match, also compare content to ensure they're truly identical
+      if tracks_match then
+        -- Compare the content of the tracks to ensure they're identical
+        local content_matches = true
+        local current_pattern = song:pattern(pattern_index)
+        local previous_pattern = song:pattern(previous_pattern_index)
+        
+        -- Compare each track's content
+        for _, track_idx in ipairs(current_track_combination) do
+          local current_track = current_pattern:track(track_idx)
+          local previous_track = previous_pattern:track(track_idx)
+          
+          -- Compare all lines in the track
+          for line_idx = 1, current_pattern.number_of_lines do
+            local current_line = current_track:line(line_idx)
+            local previous_line = previous_track:line(line_idx)
+            
+            -- Compare note columns
+            for col_idx = 1, 12 do -- Compare all 12 columns
+              local current_note = current_line:note_column(col_idx)
+              local previous_note = previous_line:note_column(col_idx)
+              
+              if current_note.note_value ~= previous_note.note_value or
+                 current_note.instrument_value ~= previous_note.instrument_value or
+                 current_note.volume_value ~= previous_note.volume_value then
+                content_matches = false
+                break
+              end
+            end
+            
+            if not content_matches then break end
+          end
+          
+          if not content_matches then break end
+        end
+        
+        -- Only treat as alias if both tracks AND content match
+        if content_matches then
+          -- Same track combination with identical content, just add C-4 notes for each occurrence
+          for i = 1, occurrences do
+            local new_pattern = song:pattern(pattern_index)
+            local new_track = new_pattern:track(new_track_idx)
+            local line = new_track:line(1)
+            line:note_column(1).note_value = 48 -- C-4
+            line:note_column(1).instrument_value = previous_instrument_idx - 1 -- 0-based
+            line:note_column(1).volume_value = 0xFF -- full velocity (255 in hex)
+          end
+          
+          -- Move to next pattern
+          current_pattern_index = current_pattern_index + 1
+          render_next_pattern()
+          return
+        end
+      end
+    end
+    
+    -- Mute all tracks except the selected ones for this pattern
+    local original_mute_states = {}
+    for i = 1, #song.tracks do
+      local track = song.tracks[i]
+      if track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
+        original_mute_states[i] = track.mute_state
+        track.mute_state = renoise.Track.MUTE_STATE_MUTED
+      end
+    end
+    
+    -- Unmute the selected tracks for this pattern
+    for _, slot in ipairs(slots) do
+      local track = song.tracks[slot.track]
+      if track and track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
+        track.mute_state = renoise.Track.MUTE_STATE_ACTIVE
+      end
+    end
+    
+    -- Double-check that selected tracks are unmuted before rendering
+    for _, slot in ipairs(slots) do
+      local track = song.tracks[slot.track]
+      if track and track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
+        if track.mute_state ~= renoise.Track.MUTE_STATE_ACTIVE then
+          track.mute_state = renoise.Track.MUTE_STATE_ACTIVE
+        end
+      end
+    end
+    
+    -- Render the pattern
+    local pattern = song:pattern(pattern_index)
+    local start_pos = renoise.SongPos(slots[1].sequence, 1)
+    local end_pos = renoise.SongPos(slots[1].sequence, pattern.number_of_lines)
+    local temp_file = os.tmpname() .. ".wav"
+    
+    local options = {
+      start_pos = start_pos,
+      end_pos = end_pos,
+      bit_depth = 16,
+      channels = 2,
+      priority = "high",
+      interpolation = "precise",
+      sample_rate = 48000
+    }
+    
+    song:render(options, temp_file, function()
+      -- Restore original mute states
+      for i = 1, #song.tracks do
+        local track = song.tracks[i]
+        if track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
+          track.mute_state = original_mute_states[i]
+        end
+      end
+      
+      -- Create new instrument and load sample
+      local new_instr_idx = song.selected_instrument_index + 1
+      local instr = song:insert_instrument_at(new_instr_idx)
+      instr:insert_sample_at(1)
+      local sample = instr:sample(1)
+      sample.sample_buffer:load_from(temp_file)
+      
+      -- Enable autoseek for the rendered sample
+      sample.autoseek = true
+      
+      -- Apply 6dB boost by setting instrument volume to maximum
+      instr.volume = 1.99526
+      
+      os.remove(temp_file)
+      
+      -- Track this pattern as rendered
+      rendered_patterns[pattern_index] = new_instr_idx
+      
+      -- Track current track combination for future alias detection
+      local current_track_combination = {}
+      for _, slot in ipairs(slots) do
+        table.insert(current_track_combination, slot.track)
+      end
+      table.sort(current_track_combination)
+      previous_track_combination = current_track_combination
+      previous_instrument_idx = new_instr_idx
+      previous_pattern_index = pattern_index
+      
+      -- Add C-4 notes for each occurrence of this pattern
+      for i = 1, occurrences do
+        local new_pattern = song:pattern(pattern_index)
+        local new_track = new_pattern:track(new_track_idx)
+        local line = new_track:line(1)
+        line:note_column(1).note_value = 48 -- C-4
+        line:note_column(1).instrument_value = new_instr_idx - 1 -- 0-based
+        line:note_column(1).volume_value = 0xFF -- full velocity (255 in hex)
+      end
+      
+      rendered_count = rendered_count + 1
+      current_pattern_index = current_pattern_index + 1
+      
+      -- Render next pattern
+      render_next_pattern()
+    end)
+  end
+  
+  -- Start rendering the first pattern
+  render_next_pattern()
+end
+
+local function merge_selected_pattern_matrix_tracks_destructive()
+  local song = renoise.song()
+  local sequencer = song.sequencer
+  
+  -- Get the pattern matrix grid selection
+  local selected_slots = {}
+  
+  -- Check each sequence and track for selected slots in the pattern matrix
+  for seq_idx = 1, #sequencer.pattern_sequence do
+    for track_idx = 1, #song.tracks do
+      if sequencer:track_sequence_slot_is_selected(track_idx, seq_idx) then
+        table.insert(selected_slots, {track = track_idx, sequence = seq_idx})
+      end
+    end
+  end
+  
+  if #selected_slots == 0 then
+    renoise.app():show_status("No pattern matrix grid slots selected")
+    return
+  end
+  
+  -- Group selected slots by pattern and detect aliases, maintaining sequence order
+  local patterns_to_render = {}
+  local pattern_occurrences = {} -- Track how many times each pattern appears
+  local sequence_order = {} -- Track the order of sequences for sorting
+  
+  for _, slot in ipairs(selected_slots) do
+    local pattern_index = sequencer:pattern(slot.sequence)
+    if not patterns_to_render[pattern_index] then
+      patterns_to_render[pattern_index] = {}
+      pattern_occurrences[pattern_index] = 0
+      -- Track the first sequence position for this pattern
+      sequence_order[pattern_index] = slot.sequence
+    end
+    table.insert(patterns_to_render[pattern_index], slot)
+    pattern_occurrences[pattern_index] = pattern_occurrences[pattern_index] + 1
+  end
+  
+  -- Convert to array for sequential processing, sorted by sequence position
+  local patterns_array = {}
+  for pattern_index, slots in pairs(patterns_to_render) do
+    table.insert(patterns_array, {
+      pattern_index = pattern_index, 
+      slots = slots, 
+      occurrences = pattern_occurrences[pattern_index],
+      sequence_pos = sequence_order[pattern_index]
+    })
+  end
+  
+  -- Sort by sequence position to maintain chronological order
+  table.sort(patterns_array, function(a, b) return a.sequence_pos < b.sequence_pos end)
+  
+  -- Find the highest track index to place new track after
+  local max_track_idx = 0
+  for _, slot in ipairs(selected_slots) do
+    max_track_idx = math.max(max_track_idx, slot.track)
+  end
+  
+  -- Create single new track after the highest selected track
+  local new_track_idx = max_track_idx + 1
+  song:insert_track_at(new_track_idx)
+  
+  local rendered_count = 0
+  local tracks_to_remove = {}
+  local patterns_to_delete = {} -- Track which patterns to delete from which tracks
+  local current_pattern_index = 1
+  local rendered_patterns = {} -- Track which patterns have already been rendered
+  local current_instrument_idx = song.selected_instrument_index + 1
+  local previous_track_combination = nil -- Track the previous track combination
+  local previous_instrument_idx = nil -- Track the instrument for the previous track combination
+  local previous_pattern_index = nil -- Track the previous pattern index
+  
+  local function render_next_pattern()
+    if current_pattern_index > #patterns_array then
+      -- All patterns rendered, now delete patterns from source tracks
+      local tracks_to_remove_list = {}
+      local deleted_patterns_count = 0
+      
+      -- First, delete the patterns from the source tracks
+      for track_idx, patterns in pairs(patterns_to_delete) do
+        for pattern_idx in pairs(patterns) do
+          -- Delete the pattern from this track
+          local pattern = song:pattern(pattern_idx)
+          local track = pattern:track(track_idx)
+          
+          -- Clear all lines in this track for this pattern
+          for line_idx = 1, pattern.number_of_lines do
+            local line = track:line(line_idx)
+            for col_idx = 1, 12 do
+              local note_column = line:note_column(col_idx)
+              note_column.note_value = 0
+              note_column.instrument_value = 0
+              note_column.volume_value = 0
+            end
+          end
+          deleted_patterns_count = deleted_patterns_count + 1
+        end
+      end
+      
+      -- Now check which tracks are completely empty and can be removed
+      for track_idx, patterns in pairs(patterns_to_delete) do
+        local track_is_empty = true
+        
+        -- Check if this track has any content in ANY pattern (not just selected patterns)
+        for pattern_idx = 1, song.sequencer.pattern_count do
+          local pattern = song:pattern(pattern_idx)
+          local track = pattern:track(track_idx)
+          
+          -- Check if this pattern has any content in this track
+          local has_content = false
+          for line_idx = 1, pattern.number_of_lines do
+            local line = track:line(line_idx)
+            for col_idx = 1, 12 do
+              local note_column = line:note_column(col_idx)
+              if note_column.note_value ~= 0 or note_column.instrument_value ~= 0 or note_column.volume_value ~= 0 then
+                has_content = true
+                break
+              end
+            end
+            if has_content then break end
+          end
+          
+          -- If this pattern has content, track is not empty (regardless of whether it was selected)
+          if has_content then
+            track_is_empty = false
+            break
+          end
+        end
+        
+        -- If track is completely empty, mark it for removal
+        if track_is_empty then
+          table.insert(tracks_to_remove_list, track_idx)
+        end
+      end
+      
+      -- Remove empty tracks (in reverse order to maintain indices)
+      table.sort(tracks_to_remove_list, function(a, b) return a > b end)
+      
+      for _, track_idx in ipairs(tracks_to_remove_list) do
+        song:delete_track_at(track_idx)
+      end
+      
+      renoise.app():show_status(string.format("Merged %d unique patterns to new track, deleted %d patterns, and removed %d empty tracks", 
+        rendered_count, deleted_patterns_count, #tracks_to_remove_list))
+      return
+    end
+    
+    local pattern_data = patterns_array[current_pattern_index]
+    local pattern_index = pattern_data.pattern_index
+    local slots = pattern_data.slots
+    local occurrences = pattern_data.occurrences
+    
+    -- Check if any of the selected tracks have notes for this pattern
+    local has_notes = false
+    local tracks_with_notes = {}
+    local tracks_without_notes = {}
+    
+    for _, slot in ipairs(slots) do
+      -- Get the pattern that corresponds to this sequence slot
+      local sequence_pattern_index = sequencer:pattern(slot.sequence)
+      local pattern = song:pattern(sequence_pattern_index)
+      local track = pattern:track(slot.track)
+      local track_name = song.tracks[slot.track].name
+      
+      -- Check all lines in this track
+      local track_has_notes = false
+      for line_idx = 1, pattern.number_of_lines do
+        local line = track:line(line_idx)
+        local note_value = line:note_column(1).note_value
+        local instrument_value = line:note_column(1).instrument_value
+        local volume_value = line:note_column(1).volume_value
+        
+        -- Filter out special Renoise note values (like 121 for stop notes, etc.)
+        -- Only count actual musical notes (1-120 for MIDI notes)
+        if note_value ~= 0 and note_value >= 1 and note_value <= 120 then
+          track_has_notes = true
+          has_notes = true
+          table.insert(tracks_with_notes, slot.track)
+          break
+        end
+      end
+      
+      if not track_has_notes then
+        table.insert(tracks_without_notes, slot.track)
+      end
+      
+      if has_notes then break end
+    end
+    
+    if not has_notes then
+      -- Skip this pattern and move to next
+      current_pattern_index = current_pattern_index + 1
+      render_next_pattern()
+      return
+    end
+    
+    -- Check if this pattern has already been rendered (alias pattern)
+    if rendered_patterns[pattern_index] then
+      -- Pattern already rendered, just add C-4 notes for each occurrence
+      local existing_instrument_idx = rendered_patterns[pattern_index]
+      
+      -- Add C-4 notes for each occurrence of this pattern
+      for i = 1, occurrences do
+        local new_pattern = song:pattern(pattern_index)
+        local new_track = new_pattern:track(new_track_idx)
+        local line = new_track:line(1)
+        line:note_column(1).note_value = 48 -- C-4
+        line:note_column(1).instrument_value = existing_instrument_idx - 1 -- 0-based
+        line:note_column(1).volume_value = 0xFF -- full velocity (255 in hex)
+      end
+      
+      -- Move to next pattern
+      current_pattern_index = current_pattern_index + 1
+      render_next_pattern()
+      return
+    end
+    
+    -- Check if this track combination is identical to the previous one (track-level alias)
+    local current_track_combination = {}
+    for _, slot in ipairs(slots) do
+      table.insert(current_track_combination, slot.track)
+    end
+    table.sort(current_track_combination) -- Sort for consistent comparison
+    
+    if previous_track_combination and previous_instrument_idx and previous_pattern_index then
+      -- Compare track combinations
+      local tracks_match = true
+      if #current_track_combination ~= #previous_track_combination then
+        tracks_match = false
+      else
+        for i = 1, #current_track_combination do
+          if current_track_combination[i] ~= previous_track_combination[i] then
+            tracks_match = false
+            break
+          end
+        end
+      end
+      
+      -- If tracks match, also compare content to ensure they're truly identical
+      if tracks_match then
+        -- Compare the content of the tracks to ensure they're identical
+        local content_matches = true
+        local current_pattern = song:pattern(pattern_index)
+        local previous_pattern = song:pattern(previous_pattern_index)
+        
+        -- Compare each track's content
+        for _, track_idx in ipairs(current_track_combination) do
+          local current_track = current_pattern:track(track_idx)
+          local previous_track = previous_pattern:track(track_idx)
+          
+          -- Compare all lines in the track
+          for line_idx = 1, current_pattern.number_of_lines do
+            local current_line = current_track:line(line_idx)
+            local previous_line = previous_track:line(line_idx)
+            
+            -- Compare note columns
+            for col_idx = 1, 12 do -- Compare all 12 columns
+              local current_note = current_line:note_column(col_idx)
+              local previous_note = previous_line:note_column(col_idx)
+              
+              if current_note.note_value ~= previous_note.note_value or
+                 current_note.instrument_value ~= previous_note.instrument_value or
+                 current_note.volume_value ~= previous_note.volume_value then
+                content_matches = false
+                break
+              end
+            end
+            
+            if not content_matches then break end
+          end
+          
+          if not content_matches then break end
+        end
+        
+        -- Only treat as alias if both tracks AND content match
+        if content_matches then
+          -- Same track combination with identical content, just add C-4 notes for each occurrence
+          for i = 1, occurrences do
+            local new_pattern = song:pattern(pattern_index)
+            local new_track = new_pattern:track(new_track_idx)
+            local line = new_track:line(1)
+            line:note_column(1).note_value = 48 -- C-4
+            line:note_column(1).instrument_value = previous_instrument_idx - 1 -- 0-based
+            line:note_column(1).volume_value = 0xFF -- full velocity (255 in hex)
+          end
+          
+          -- Move to next pattern
+          current_pattern_index = current_pattern_index + 1
+          render_next_pattern()
+          return
+        end
+      end
+    end
+    
+    -- Mute all tracks except the selected ones for this pattern
+    local original_mute_states = {}
+    for i = 1, #song.tracks do
+      local track = song.tracks[i]
+      if track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
+        original_mute_states[i] = track.mute_state
+        track.mute_state = renoise.Track.MUTE_STATE_MUTED
+      end
+    end
+    
+    -- Unmute the selected tracks for this pattern
+    for _, slot in ipairs(slots) do
+      local track = song.tracks[slot.track]
+      if track and track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
+        track.mute_state = renoise.Track.MUTE_STATE_ACTIVE
+        -- Mark pattern for deletion from this track
+        if not patterns_to_delete[slot.track] then
+          patterns_to_delete[slot.track] = {}
+        end
+        patterns_to_delete[slot.track][pattern_index] = true
+      end
+    end
+    
+    -- Double-check that selected tracks are unmuted before rendering
+    for _, slot in ipairs(slots) do
+      local track = song.tracks[slot.track]
+      if track and track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
+        if track.mute_state ~= renoise.Track.MUTE_STATE_ACTIVE then
+          track.mute_state = renoise.Track.MUTE_STATE_ACTIVE
+        end
+      end
+    end
+    
+    -- Render the pattern
+    local pattern = song:pattern(pattern_index)
+    local start_pos = renoise.SongPos(slots[1].sequence, 1)
+    local end_pos = renoise.SongPos(slots[1].sequence, pattern.number_of_lines)
+    local temp_file = os.tmpname() .. ".wav"
+    
+    local options = {
+      start_pos = start_pos,
+      end_pos = end_pos,
+      bit_depth = 16,
+      channels = 2,
+      priority = "high",
+      interpolation = "precise",
+      sample_rate = 48000
+    }
+    
+    song:render(options, temp_file, function()
+      -- Restore original mute states
+      for i = 1, #song.tracks do
+        local track = song.tracks[i]
+        if track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
+          track.mute_state = original_mute_states[i]
+        end
+      end
+      
+      -- Create new instrument and load sample
+      local new_instr_idx = song.selected_instrument_index + 1
+      local instr = song:insert_instrument_at(new_instr_idx)
+      instr:insert_sample_at(1)
+      local sample = instr:sample(1)
+      sample.sample_buffer:load_from(temp_file)
+      
+      -- Enable autoseek for the rendered sample
+      sample.autoseek = true
+      
+      -- Apply 6dB boost by setting instrument volume to maximum
+      instr.volume = 1.99526
+      
+      os.remove(temp_file)
+      
+      -- Track this pattern as rendered
+      rendered_patterns[pattern_index] = new_instr_idx
+      
+      -- Track current track combination for future alias detection
+      local current_track_combination = {}
+      for _, slot in ipairs(slots) do
+        table.insert(current_track_combination, slot.track)
+      end
+      table.sort(current_track_combination)
+      previous_track_combination = current_track_combination
+      previous_instrument_idx = new_instr_idx
+      previous_pattern_index = pattern_index
+      
+      -- Add C-4 notes for each occurrence of this pattern
+      for i = 1, occurrences do
+        local new_pattern = song:pattern(pattern_index)
+        local new_track = new_pattern:track(new_track_idx)
+        local line = new_track:line(1)
+        line:note_column(1).note_value = 48 -- C-4
+        line:note_column(1).instrument_value = new_instr_idx - 1 -- 0-based
+        line:note_column(1).volume_value = 0xFF -- full velocity (255 in hex)
+      end
+      
+      rendered_count = rendered_count + 1
+      current_pattern_index = current_pattern_index + 1
+      
+      -- Render next pattern
+      render_next_pattern()
+    end)
+  end
+  
+  -- Start rendering the first pattern
+  render_next_pattern()
+end
+
+local function remove_empty_tracks()
+  utils.remove_empty_tracks()
+end
+
 registration.register_menu_and_keybindings({
   show_hello = show_hello,
   render_selection_to_new_track = render_selection_to_new_track,
   render_selection_to_new_track_destructive = render_selection_to_new_track_destructive,
   render_selection_to_next_track = render_selection_to_next_track,
   render_selection_to_next_track_destructive = render_selection_to_next_track_destructive,
+  render_selection_to_copy_buffer = render_selection_to_copy_buffer,
+  paste_sample_from_clipboard = paste_sample_from_clipboard,
+  clear_sample_clipboard = clear_sample_clipboard,
   sample_and_merge_track_notes = sample_and_merge_track_notes,
   set_playhead_buffer = set_playhead_buffer,
   play_from_buffer = play_from_buffer,
-  jump_to_test_position = jump_to_test_position,
+  jump_to_buffered_play_line = jump_to_buffered_play_line,
   find_duplicate_single_sample_instruments = find_duplicate_single_sample_instruments,
   prompt_and_merge_instruments = prompt_and_merge_instruments,
   prompt_and_remap_instruments = prompt_and_remap_instruments,
   remap_selected_notes_to_this = remap_selected_notes_to_this,
+  render_selection_to_instrument_sample = render_selection_to_instrument_sample,
   increase_velocity = instrument_utils.increase_velocity,
   decrease_velocity = instrument_utils.decrease_velocity,
   increase_velocity_sensitive = instrument_utils.increase_velocity_sensitive,
@@ -268,12 +1104,24 @@ registration.register_menu_and_keybindings({
   jump_to_previous_track = jump_to_previous_track,
   jump_to_next_collapsed_track = jump_to_next_collapsed_track,
   jump_to_previous_collapsed_track = jump_to_previous_collapsed_track,
+  move_to_next_track_skip_collapsed = move_to_next_track_skip_collapsed,
+  jump_to_previous_track_with_solo = jump_to_previous_track_with_solo,
+  jump_to_next_track_with_solo = jump_to_next_track_with_solo,
+  jump_quarter_up = jump_quarter_up,
+  jump_quarter_down = jump_quarter_down,
   toggle_auto_collapse_before_jump = toggle_auto_collapse_before_jump,
   toggle_auto_collapse_on_focus_loss = toggle_auto_collapse_on_focus_loss,
   double_pattern_length = double_pattern_length,
   halve_pattern_length = halve_pattern_length,
   change_lpb = change_lpb,
-  color_selected_pattern_slots = color_selected_pattern_slots
+  nudge_note_up = nudge_note_up,
+  nudge_note_down = nudge_note_down,
+  expand_selection_to_full_pattern = expand_selection_to_full_pattern,
+  color_selected_pattern_slots = color_selected_pattern_slots,
+  solo_selected_pattern_matrix_tracks = solo_selected_pattern_matrix_tracks,
+  merge_selected_pattern_matrix_tracks = merge_selected_pattern_matrix_tracks,
+  merge_selected_pattern_matrix_tracks_destructive = merge_selected_pattern_matrix_tracks_destructive,
+  remove_empty_tracks = remove_empty_tracks
 })
 
 -- Initialize track selection notifier after script is loaded

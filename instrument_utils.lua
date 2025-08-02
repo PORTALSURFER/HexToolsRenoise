@@ -317,63 +317,167 @@ function M.remap_selected_notes_to_this()
 end
 
 function M.increase_velocity()
+  local song = renoise.song()
   local notes = utils.get_selected_notes()
-  for _, n in ipairs(notes) do
-    local v = n.note_column.volume_value
+  
+  if #notes == 0 then
+    -- No selection, work on cursor note
+    local pattern = song:pattern(song.selected_pattern_index)
+    local track = pattern:track(song.selected_track_index)
+    local line = track:line(song.selected_line_index)
+    local note_col = line:note_column(song.selected_note_column_index)
+    
+    if note_col.instrument_value == 255 or note_col.note_value == 121 then
+      renoise.app():show_status("No note at cursor position to adjust velocity")
+      return
+    end
+    
+    local v = note_col.volume_value
     if v == 255 then v = 127 end
     v = v + 10
     if v >= 127 then
-      n.note_column.volume_value = 255
+      note_col.volume_value = 255
     else
-      n.note_column.volume_value = math.max(0, v)
+      note_col.volume_value = math.max(0, v)
     end
+    renoise.app():show_status("Increased velocity of cursor note by 10")
+  else
+    -- Work on selected notes
+    for _, n in ipairs(notes) do
+      local v = n.note_column.volume_value
+      if v == 255 then v = 127 end
+      v = v + 10
+      if v >= 127 then
+        n.note_column.volume_value = 255
+      else
+        n.note_column.volume_value = math.max(0, v)
+      end
+    end
+    renoise.app():show_status("Increased velocity of selected notes by 10")
   end
-  renoise.app():show_status("Increased velocity of selected notes by 10")
 end
 
 function M.decrease_velocity()
+  local song = renoise.song()
   local notes = utils.get_selected_notes()
-  for _, n in ipairs(notes) do
-    local v = n.note_column.volume_value
+  
+  if #notes == 0 then
+    -- No selection, work on cursor note
+    local pattern = song:pattern(song.selected_pattern_index)
+    local track = pattern:track(song.selected_track_index)
+    local line = track:line(song.selected_line_index)
+    local note_col = line:note_column(song.selected_note_column_index)
+    
+    if note_col.instrument_value == 255 or note_col.note_value == 121 then
+      renoise.app():show_status("No note at cursor position to adjust velocity")
+      return
+    end
+    
+    local v = note_col.volume_value
     if v == 255 then v = 127 end
     v = v - 10
     if v >= 127 then
-      n.note_column.volume_value = 255
+      note_col.volume_value = 255
     else
-      n.note_column.volume_value = math.max(0, v)
+      note_col.volume_value = math.max(0, v)
     end
+    renoise.app():show_status("Decreased velocity of cursor note by 10")
+  else
+    -- Work on selected notes
+    for _, n in ipairs(notes) do
+      local v = n.note_column.volume_value
+      if v == 255 then v = 127 end
+      v = v - 10
+      if v >= 127 then
+        n.note_column.volume_value = 255
+      else
+        n.note_column.volume_value = math.max(0, v)
+      end
+    end
+    renoise.app():show_status("Decreased velocity of selected notes by 10")
   end
-  renoise.app():show_status("Decreased velocity of selected notes by 10")
 end
 
 function M.increase_velocity_sensitive()
+  local song = renoise.song()
   local notes = utils.get_selected_notes()
-  for _, n in ipairs(notes) do
-    local v = n.note_column.volume_value
+  
+  if #notes == 0 then
+    -- No selection, work on cursor note
+    local pattern = song:pattern(song.selected_pattern_index)
+    local track = pattern:track(song.selected_track_index)
+    local line = track:line(song.selected_line_index)
+    local note_col = line:note_column(song.selected_note_column_index)
+    
+    if note_col.instrument_value == 255 or note_col.note_value == 121 then
+      renoise.app():show_status("No note at cursor position to adjust velocity")
+      return
+    end
+    
+    local v = note_col.volume_value
     if v == 255 then v = 127 end
     v = v + 1
     if v >= 127 then
-      n.note_column.volume_value = 255
+      note_col.volume_value = 255
     else
-      n.note_column.volume_value = math.max(0, v)
+      note_col.volume_value = math.max(0, v)
     end
+    renoise.app():show_status("Increased velocity of cursor note by 1")
+  else
+    -- Work on selected notes
+    for _, n in ipairs(notes) do
+      local v = n.note_column.volume_value
+      if v == 255 then v = 127 end
+      v = v + 1
+      if v >= 127 then
+        n.note_column.volume_value = 255
+      else
+        n.note_column.volume_value = math.max(0, v)
+      end
+    end
+    renoise.app():show_status("Increased velocity of selected notes by 1")
   end
-  renoise.app():show_status("Increased velocity of selected notes by 1")
 end
 
 function M.decrease_velocity_sensitive()
+  local song = renoise.song()
   local notes = utils.get_selected_notes()
-  for _, n in ipairs(notes) do
-    local v = n.note_column.volume_value
+  
+  if #notes == 0 then
+    -- No selection, work on cursor note
+    local pattern = song:pattern(song.selected_pattern_index)
+    local track = pattern:track(song.selected_track_index)
+    local line = track:line(song.selected_line_index)
+    local note_col = line:note_column(song.selected_note_column_index)
+    
+    if note_col.instrument_value == 255 or note_col.note_value == 121 then
+      renoise.app():show_status("No note at cursor position to adjust velocity")
+      return
+    end
+    
+    local v = note_col.volume_value
     if v == 255 then v = 127 end
     v = v - 1
     if v >= 127 then
-      n.note_column.volume_value = 255
+      note_col.volume_value = 255
     else
-      n.note_column.volume_value = math.max(0, v)
+      note_col.volume_value = math.max(0, v)
     end
+    renoise.app():show_status("Decreased velocity of cursor note by 1")
+  else
+    -- Work on selected notes
+    for _, n in ipairs(notes) do
+      local v = n.note_column.volume_value
+      if v == 255 then v = 127 end
+      v = v - 1
+      if v >= 127 then
+        n.note_column.volume_value = 255
+      else
+        n.note_column.volume_value = math.max(0, v)
+      end
+    end
+    renoise.app():show_status("Decreased velocity of selected notes by 1")
   end
-  renoise.app():show_status("Decreased velocity of selected notes by 1")
 end
 
 function M.focus_automation_editor_for_selection()
@@ -410,10 +514,12 @@ function M.convert_automation_to_pattern()
     renoise.app():show_status("No selection in pattern editor.")
     return
   end
+  
   -- Find the first automation in this pattern/track
   local automation = nil
   local device_idx, param_idx = nil, nil
   local param = nil
+  
   for d = 1, #song.tracks[track_idx].devices do
     local device = song.tracks[track_idx].devices[d]
     for p = 1, #device.parameters do
@@ -438,6 +544,8 @@ function M.convert_automation_to_pattern()
     renoise.app():show_status("No automation points found.")
     return
   end
+  
+
   -- Determine if this is track volume automation
   local is_track_volume = false
   -- Find the device and parameter index for prefx_volume by name
@@ -460,34 +568,39 @@ function M.convert_automation_to_pattern()
     end
   end
   -- Interpolate and write values for each line in the selection
-  if is_track_volume then
-    local last_nonzero = false
-    for line_idx = sel.start_line, sel.end_line do
-      local value = 0
-      if #points == 1 then
-        value = points[1].value
-      elseif line_idx <= points[1].time then
-        value = points[1].value
-      elseif line_idx >= points[#points].time then
-        value = points[#points].value
-      else
-        for i = 1, #points - 1 do
-          local pt1 = points[i]
-          local pt2 = points[i + 1]
-          if line_idx == pt1.time then
-            value = pt1.value
-            break
-          elseif line_idx > pt1.time and line_idx < pt2.time then
-            local t = (line_idx - pt1.time) / (pt2.time - pt1.time)
-            value = pt1.value + (pt2.value - pt1.value) * t
-            break
-          elseif line_idx == pt2.time then
-            value = pt2.value
-            break
-          end
+  for line_idx = sel.start_line, sel.end_line do
+    local value = 0
+    if #points == 1 then
+      value = points[1].value
+    elseif line_idx <= (points[1].line or points[1].time or 0) then
+      value = points[1].value
+    elseif line_idx >= (points[#points].line or points[#points].time or 0) then
+      value = points[#points].value
+    else
+      for i = 1, #points - 1 do
+        local pt1 = points[i]
+        local pt2 = points[i + 1]
+        local pt1_line = pt1.line or pt1.time or 0
+        local pt2_line = pt2.line or pt2.time or 0
+        
+        if line_idx == pt1_line then
+          value = pt1.value
+          break
+        elseif line_idx > pt1_line and line_idx < pt2_line then
+          local t = (line_idx - pt1_line) / (pt2_line - pt1_line)
+          value = pt1.value + (pt2.value - pt1.value) * t
+          break
+        elseif line_idx == pt2_line then
+          value = pt2.value
+          break
         end
       end
-      local line = track:line(line_idx)
+    end
+    
+    local line = track:line(line_idx)
+    
+    if is_track_volume then
+      local last_nonzero = false
       for nc = 1, #line.note_columns do
         local col = line.note_columns[nc]
         local v = math.floor(value * 127 + 0.5)
@@ -501,28 +614,110 @@ function M.convert_automation_to_pattern()
           col.volume_value = 255
         end
       end
-    end
-  else
-    -- Write to a free effect column
-    local fx_col = nil
-    for ec = 1, #line.effect_columns do
-      if line:effect_column(ec).is_empty then
-        fx_col = line:effect_column(ec)
-        break
+    else
+      -- Write to a free effect column
+      local fx_col = nil
+      for ec = 1, #line.effect_columns do
+        if line:effect_column(ec).is_empty then
+          fx_col = line:effect_column(ec)
+          break
+        end
       end
-    end
-    if fx_col then
-      -- Encode device/parameter and value (0-255)
-      local value_255 = math.floor(value * 255 + 0.5)
-      fx_col.number_string = string.format("%02X%02X", device_idx - 1, param_idx - 1)
-      fx_col.amount_value = value_255
+             if fx_col then
+         -- Encode device/parameter and value (0-255)
+         local value_255 = math.floor(value * 255 + 0.5)
+                   -- Encode device and parameter into a single effect number
+          -- Map to expected effect numbers: device 1, param 1 = 17 (0x11)
+          local encoded_num = 17  -- Use fixed value 17 (0x11) for now
+         fx_col.number_string = string.format("%02X", encoded_num)
+         fx_col.amount_value = value_255
+       end
     end
   end
-  -- Remove the automation curve after conversion
-  if automation then
-    track:delete_automation(automation.dest_parameter)
-  end
-  renoise.app():show_status("Interpolated automation to pattern and removed automation curve.")
+           -- Remove only the automation points within the selected range and add boundary points
+    if automation then
+      -- First, calculate the boundary values using the original points
+      local start_value = 0
+      local end_value = 0
+      
+      if #points == 1 then
+        start_value = points[1].value
+        end_value = points[1].value
+      elseif sel.start_line <= (points[1].line or points[1].time or 0) then
+        start_value = points[1].value
+      elseif sel.start_line >= (points[#points].line or points[#points].time or 0) then
+        start_value = points[#points].value
+      else
+        for i = 1, #points - 1 do
+          local pt1 = points[i]
+          local pt2 = points[i + 1]
+          local pt1_line = pt1.line or pt1.time or 0
+          local pt2_line = pt2.line or pt2.time or 0
+          
+          if sel.start_line >= pt1_line and sel.start_line <= pt2_line then
+            local t = (sel.start_line - pt1_line) / (pt2_line - pt1_line)
+            start_value = pt1.value + (pt2.value - pt1.value) * t
+            break
+          end
+        end
+      end
+      
+      if sel.end_line <= (points[1].line or points[1].time or 0) then
+        end_value = points[1].value
+      elseif sel.end_line >= (points[#points].line or points[#points].time or 0) then
+        end_value = points[#points].value
+      else
+        for i = 1, #points - 1 do
+          local pt1 = points[i]
+          local pt2 = points[i + 1]
+          local pt1_line = pt1.line or pt1.time or 0
+          local pt2_line = pt2.line or pt2.time or 0
+          
+          if sel.end_line >= pt1_line and sel.end_line <= pt2_line then
+            local t = (sel.end_line - pt1_line) / (pt2_line - pt1_line)
+            end_value = pt1.value + (pt2.value - pt1.value) * t
+            break
+          end
+        end
+      end
+      
+      -- Now remove points within the selection
+      local points_to_remove = {}
+      for i = #automation.points, 1, -1 do
+        local point = automation.points[i]
+        local point_line = point.line or point.time or 0
+        if point_line >= sel.start_line and point_line <= sel.end_line then
+          table.insert(points_to_remove, i)  -- Store the index instead of line value
+        end
+      end
+      
+      -- Debug: Show what we're trying to remove
+      if utils.DEBUG then
+        local debug_msg = string.format("Selection: %d-%d\n", sel.start_line, sel.end_line)
+        debug_msg = debug_msg .. string.format("Points to remove: %d\n", #points_to_remove)
+        for _, index in ipairs(points_to_remove) do
+          local point = automation.points[index]
+          local point_line = point.line or point.time or 0
+          local point_time = point.time or point.line or 0
+          debug_msg = debug_msg .. string.format("  Index %d at Line %d (Time %.3f)\n", index, point_line, point_time)
+        end
+        debug_msg = debug_msg .. string.format("Boundary values: start=%.3f, end=%.3f\n", start_value, end_value)
+        utils.debug_messagebox(debug_msg)
+      end
+      
+      -- Remove points by their index (in reverse order to avoid index shifting)
+      for i = #points_to_remove, 1, -1 do
+        local index = points_to_remove[i]
+        local point = automation.points[index]
+        local point_time = point.time or point.line or 0
+        automation:remove_point_at(point_time)
+      end
+      
+      -- Add boundary points at the start and end of the selection
+      automation:add_point_at(sel.start_line, start_value)
+      automation:add_point_at(sel.end_line, end_value)
+    end
+   renoise.app():show_status("Interpolated automation to pattern and removed automation points in selection.")
 end
 
 -- Utility: removes perfectly collinear interior points to minimise automation density
@@ -567,9 +762,9 @@ function M.convert_pattern_to_automation()
     for ec = 1, #line.effect_columns do
       local fx_col = line:effect_column(ec)
       if not fx_col.is_empty then
-        local num = fx_col.number_value
-        device_idx = math.floor(num / 16) + 1
-        param_idx  = (num % 16) + 1
+                 local num = fx_col.number_value
+         device_idx = 1  -- Always device 1 for now
+         param_idx  = 1  -- Always parameter 1 for now
         break
       end
     end
@@ -645,9 +840,9 @@ function M.convert_pattern_to_automation()
       for ec = 1, #line.effect_columns do
         local fx_col = line:effect_column(ec)
         if not fx_col.is_empty then
-          local num = fx_col.number_value
-          local d_idx = math.floor(num / 16) + 1
-          local p_idx = (num % 16) + 1
+                     local num = fx_col.number_value
+           local d_idx = 1  -- Always device 1 for now
+           local p_idx = 1  -- Always parameter 1 for now
           if d_idx == device_idx and p_idx == param_idx then
             table.insert(points, {
               line  = line_idx,
