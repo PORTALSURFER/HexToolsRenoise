@@ -289,6 +289,57 @@ local function color_selected_pattern_slots()
     colored_slots, random_color[1], random_color[2], random_color[3]))
 end
 
+local function solo_selected_pattern_matrix_tracks()
+  local song = renoise.song()
+  local sequencer = song.sequencer
+  
+  -- Get the pattern matrix grid selection
+  local selected_slots = {}
+  
+  -- Check each sequence and track for selected slots in the pattern matrix
+  for seq_idx = 1, #sequencer.pattern_sequence do
+    for track_idx = 1, #song.tracks do
+      if sequencer:track_sequence_slot_is_selected(track_idx, seq_idx) then
+        table.insert(selected_slots, {track = track_idx, sequence = seq_idx})
+      end
+    end
+  end
+  
+  if #selected_slots == 0 then
+    renoise.app():show_status("No pattern matrix grid slots selected")
+    return
+  end
+  
+  -- First, mute all tracks
+  for i = 1, #song.tracks do
+    local track = song.tracks[i]
+    if track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
+      track.mute_state = renoise.Track.MUTE_STATE_MUTED
+    end
+  end
+  
+  -- Solo the tracks that have selected slots
+  local soloed_tracks = {}
+  for _, slot in ipairs(selected_slots) do
+    local track = song.tracks[slot.track]
+    if track and track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
+      track.mute_state = renoise.Track.MUTE_STATE_ACTIVE
+      if not soloed_tracks[slot.track] then
+        soloed_tracks[slot.track] = true
+      end
+    end
+  end
+  
+  -- Count unique soloed tracks
+  local soloed_count = 0
+  for _ in pairs(soloed_tracks) do
+    soloed_count = soloed_count + 1
+  end
+  
+  renoise.app():show_status(string.format("Soloed %d tracks from %d selected pattern matrix slots", 
+    soloed_count, #selected_slots))
+end
+
 local function remove_empty_tracks()
   utils.remove_empty_tracks()
 end
@@ -338,6 +389,7 @@ registration.register_menu_and_keybindings({
   nudge_note_down = nudge_note_down,
   expand_selection_to_full_pattern = expand_selection_to_full_pattern,
   color_selected_pattern_slots = color_selected_pattern_slots,
+  solo_selected_pattern_matrix_tracks = solo_selected_pattern_matrix_tracks,
   remove_empty_tracks = remove_empty_tracks
 })
 

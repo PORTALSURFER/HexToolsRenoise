@@ -27,3 +27,5 @@
 | Pattern Editor:Tools:Move To Next Track (Skip Collapsed) | `move_to_next_track_skip_collapsed` |
 | Pattern Editor:Tools:Jump To Next Track (With Solo) | `jump_to_next_track_with_solo` |
 | Pattern Editor:Tools:Jump To Previous Track (With Solo) | `jump_to_previous_track_with_solo` |
+| Pattern Editor:Tools:Color Selected Pattern Slots | `color_selected_pattern_slots` |
+| Pattern Matrix:Tools:Solo Selected Tracks | `solo_selected_pattern_matrix_tracks` |
