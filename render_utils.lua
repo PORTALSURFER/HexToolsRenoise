@@ -556,4 +556,86 @@ function M.clear_sample_clipboard()
   renoise.app():show_status("Sample clipboard cleared")
 end
 
+-- Render the current pattern selection to a new sample in the selected instrument
+function M.render_selection_to_instrument_sample()
+  local song = renoise.song()
+  local sel = song.selection_in_pattern
+
+  if not sel then
+    renoise.app():show_status("Nothing selected to render")
+    return
+  end
+
+  -- Get the selected instrument
+  local selected_instr = song:instrument(song.selected_instrument_index)
+  if not selected_instr then
+    renoise.app():show_status("No instrument selected")
+    return
+  end
+
+  -- Store original mute states
+  local original_mute_states = {}
+  for i = 1, #song.tracks do
+    original_mute_states[i] = song.tracks[i].mute_state
+  end
+
+  -- Determine the source tracks from selection (not cursor position)
+  local start_track_idx = sel.start_track or song.selected_track_index
+  local end_track_idx = sel.end_track or song.selected_track_index
+
+  -- Mute all tracks except the selected ones
+  for i = 1, #song.tracks do
+    local track = song.tracks[i]
+    -- Skip master track as it cannot be muted
+    if track.type == renoise.Track.TRACK_TYPE_MASTER then
+      -- Keep master track as is
+    elseif i >= start_track_idx and i <= end_track_idx then
+      track.mute_state = renoise.Track.MUTE_STATE_ACTIVE
+    else
+      track.mute_state = renoise.Track.MUTE_STATE_MUTED
+    end
+  end
+
+  local start_pos = renoise.SongPos(song.selected_sequence_index, sel.start_line)
+  local end_pos = renoise.SongPos(song.selected_sequence_index, sel.end_line)
+  local temp_file = os.tmpname() .. ".wav"
+
+  local options = {
+    start_pos = start_pos,
+    end_pos = end_pos,
+    bit_depth = 16,
+    channels = 2,
+    priority = "high",
+    interpolation = "precise",
+    sample_rate = 48000
+  }
+
+  song:render(options, temp_file, function()
+    -- Restore original mute states
+    for i = 1, #song.tracks do
+      song.tracks[i].mute_state = original_mute_states[i]
+    end
+
+    -- Create a new sample in the selected instrument
+    local new_sample_idx = #selected_instr.samples + 1
+    local new_sample = selected_instr:insert_sample_at(new_sample_idx)
+    
+    -- Load the rendered audio into the new sample
+    new_sample.sample_buffer:load_from(temp_file)
+    
+    -- Enable autoseek for the rendered sample
+    new_sample.autoseek = true
+    
+    -- Set a descriptive name for the sample
+    local sample_name = string.format("Rendered_%d_%d_%d_%d", 
+      song.selected_sequence_index, sel.start_line, sel.end_line, new_sample_idx)
+    new_sample.name = sample_name
+    
+    os.remove(temp_file)
+
+    renoise.app():show_status(string.format("Rendered selection to new sample %d in instrument %d: %s", 
+      new_sample_idx, song.selected_instrument_index, sample_name))
+  end)
+end
+
 return M 

@@ -1,10 +1,19 @@
 # HexTools for Renoise
 
 **Author:** Hex  
-**Version:** v0.3.0  
-**Latest Release:** [v0.3.0](https://github.com/hex/HexTools/releases/tag/v0.3.0)
+**Version:** v0.3.1  
+**Latest Release:** [v0.3.1](https://github.com/hex/HexTools/releases/tag/v0.3.1)
 
 Collection of useful tools for the Renoise digital audio workstation.
+
+## Recent Updates (v0.3.1)
+
+### **New Features**
+- **Render Selection to Instrument Sample**: Render the current pattern selection to a new sample in the selected instrument (accumulation mode)
+  - Similar to SamRender's accumulation mode functionality
+  - Adds new samples to the selected instrument without creating new instruments
+  - Automatically names samples with descriptive information
+  - Enables autoseek for rendered samples
 
 ## Recent Updates (v0.3.0)
 
@@ -37,6 +46,9 @@ HexTools adds the following utilities and workflow enhancements to Renoise:
 - **Intelligent Track Navigation**: 
   - Jump between active tracks while skipping null tracks
   - Jump between null tracks for quick access to empty tracks
+  - Move to next track (skip collapsed) - alternative navigation method
+  - Jump to next track with solo - automatically solos the target track
+  - Jump to previous track with solo - automatically solos the target track
   - Auto-collapse before navigation (toggleable)
 - **Pattern State Tracking**: Remembers collapsed/expanded state per pattern
 - **Focus Management**: Automatically handles track focus states and color transitions
@@ -58,6 +70,7 @@ HexTools adds the following utilities and workflow enhancements to Renoise:
 - **Merge Instruments**: Merge multiple instruments into one, reassigning pattern references
 - **Remap Instruments**: Remap pattern instrument references to a new instrument, with optional deletion of old instruments
 - **Remap Selected Notes**: Remap selected notes to the currently selected instrument
+- **Render Selection to Instrument Sample**: Render the current pattern selection to a new sample in the selected instrument (accumulation mode)
 
 ### **Note Velocity Tools**
 - **Increase/Decrease Velocity**: Adjust velocity of selected notes by 10 or by 1 for fine adjustment
@@ -113,33 +126,8 @@ All features below can be mapped to custom keys in Renoise via the Preferences >
 - `Pattern Editor:Tools:Render Selection To Next Track Destructive`
 - `Pattern Editor:Tools:Sample And Merge Track Notes`
 - `Pattern Editor:Tools:Find Duplicate Single-Sample Instruments`
-- `Pattern Editor:Tools:Merge Instruments`
-- `Pattern Editor:Tools:Remap Instruments`
-- `Pattern Editor:Tools:Increase Velocity`
-- `Pattern Editor:Tools:Decrease Velocity`
-- `Pattern Editor:Tools:Increase Velocity (Sensitive)`
-- `Pattern Editor:Tools:Decrease Velocity (Sensitive)`
-- `Pattern Editor:Tools:Focus Automation Editor for Selection`
-- `Pattern Editor:Tools:Convert Automation To Pattern`
-- `Pattern Editor:Tools:Convert Pattern To Automation`
-- `Pattern Editor:Tools:Collapse Unused Tracks in Pattern` *(toggles collapse/expand)*
 - `Pattern Editor:Tools:Jump To Next Track (Skip Collapsed)`
 - `Pattern Editor:Tools:Jump To Previous Track (Skip Collapsed)`
-- `Pattern Editor:Tools:Toggle Auto-Collapse Before Jump`
-- `Pattern Editor:Tools:Jump To Next Collapsed Track`
-- `Pattern Editor:Tools:Jump To Previous Collapsed Track`
-- `Pattern Editor:Tools:Toggle Auto-Collapse On Focus Loss`
-- `Pattern Editor:Tools:Double Pattern Length`
-- `Pattern Editor:Tools:Halve Pattern Length`
-- `Pattern Editor:Tools:Change LPB`
-
-## Installation
-
-1. Copy the `HexTools.xrnx` directory into your Renoise `Tools` folder. Renoise will detect the tool automatically.
-2. In Renoise, open the `Tools` menu and choose `HexTools > ...`.
-
-For more details about developing Renoise tools, see the [official API documentation](https://renoise.github.io/xrnx/API/index.htm).
-
-## Mentions
-
-- [esaruoho/paketti](https://github.com/esaruoho/paketti): A great collection of Renoise tools and a source of inspiration for this project.
+- `Pattern Editor:Tools:Move To Next Track (Skip Collapsed)`
+- `Pattern Editor:Tools:Jump To Next Track (With Solo)`
+- `Pattern Editor:Tools:Jump To Previous Track (With Solo)`

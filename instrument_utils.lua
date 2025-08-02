@@ -317,63 +317,167 @@ function M.remap_selected_notes_to_this()
 end
 
 function M.increase_velocity()
+  local song = renoise.song()
   local notes = utils.get_selected_notes()
-  for _, n in ipairs(notes) do
-    local v = n.note_column.volume_value
+  
+  if #notes == 0 then
+    -- No selection, work on cursor note
+    local pattern = song:pattern(song.selected_pattern_index)
+    local track = pattern:track(song.selected_track_index)
+    local line = track:line(song.selected_line_index)
+    local note_col = line:note_column(song.selected_note_column_index)
+    
+    if note_col.instrument_value == 255 or note_col.note_value == 121 then
+      renoise.app():show_status("No note at cursor position to adjust velocity")
+      return
+    end
+    
+    local v = note_col.volume_value
     if v == 255 then v = 127 end
     v = v + 10
     if v >= 127 then
-      n.note_column.volume_value = 255
+      note_col.volume_value = 255
     else
-      n.note_column.volume_value = math.max(0, v)
+      note_col.volume_value = math.max(0, v)
     end
+    renoise.app():show_status("Increased velocity of cursor note by 10")
+  else
+    -- Work on selected notes
+    for _, n in ipairs(notes) do
+      local v = n.note_column.volume_value
+      if v == 255 then v = 127 end
+      v = v + 10
+      if v >= 127 then
+        n.note_column.volume_value = 255
+      else
+        n.note_column.volume_value = math.max(0, v)
+      end
+    end
+    renoise.app():show_status("Increased velocity of selected notes by 10")
   end
-  renoise.app():show_status("Increased velocity of selected notes by 10")
 end
 
 function M.decrease_velocity()
+  local song = renoise.song()
   local notes = utils.get_selected_notes()
-  for _, n in ipairs(notes) do
-    local v = n.note_column.volume_value
+  
+  if #notes == 0 then
+    -- No selection, work on cursor note
+    local pattern = song:pattern(song.selected_pattern_index)
+    local track = pattern:track(song.selected_track_index)
+    local line = track:line(song.selected_line_index)
+    local note_col = line:note_column(song.selected_note_column_index)
+    
+    if note_col.instrument_value == 255 or note_col.note_value == 121 then
+      renoise.app():show_status("No note at cursor position to adjust velocity")
+      return
+    end
+    
+    local v = note_col.volume_value
     if v == 255 then v = 127 end
     v = v - 10
     if v >= 127 then
-      n.note_column.volume_value = 255
+      note_col.volume_value = 255
     else
-      n.note_column.volume_value = math.max(0, v)
+      note_col.volume_value = math.max(0, v)
     end
+    renoise.app():show_status("Decreased velocity of cursor note by 10")
+  else
+    -- Work on selected notes
+    for _, n in ipairs(notes) do
+      local v = n.note_column.volume_value
+      if v == 255 then v = 127 end
+      v = v - 10
+      if v >= 127 then
+        n.note_column.volume_value = 255
+      else
+        n.note_column.volume_value = math.max(0, v)
+      end
+    end
+    renoise.app():show_status("Decreased velocity of selected notes by 10")
   end
-  renoise.app():show_status("Decreased velocity of selected notes by 10")
 end
 
 function M.increase_velocity_sensitive()
+  local song = renoise.song()
   local notes = utils.get_selected_notes()
-  for _, n in ipairs(notes) do
-    local v = n.note_column.volume_value
+  
+  if #notes == 0 then
+    -- No selection, work on cursor note
+    local pattern = song:pattern(song.selected_pattern_index)
+    local track = pattern:track(song.selected_track_index)
+    local line = track:line(song.selected_line_index)
+    local note_col = line:note_column(song.selected_note_column_index)
+    
+    if note_col.instrument_value == 255 or note_col.note_value == 121 then
+      renoise.app():show_status("No note at cursor position to adjust velocity")
+      return
+    end
+    
+    local v = note_col.volume_value
     if v == 255 then v = 127 end
     v = v + 1
     if v >= 127 then
-      n.note_column.volume_value = 255
+      note_col.volume_value = 255
     else
-      n.note_column.volume_value = math.max(0, v)
+      note_col.volume_value = math.max(0, v)
     end
+    renoise.app():show_status("Increased velocity of cursor note by 1")
+  else
+    -- Work on selected notes
+    for _, n in ipairs(notes) do
+      local v = n.note_column.volume_value
+      if v == 255 then v = 127 end
+      v = v + 1
+      if v >= 127 then
+        n.note_column.volume_value = 255
+      else
+        n.note_column.volume_value = math.max(0, v)
+      end
+    end
+    renoise.app():show_status("Increased velocity of selected notes by 1")
   end
-  renoise.app():show_status("Increased velocity of selected notes by 1")
 end
 
 function M.decrease_velocity_sensitive()
+  local song = renoise.song()
   local notes = utils.get_selected_notes()
-  for _, n in ipairs(notes) do
-    local v = n.note_column.volume_value
+  
+  if #notes == 0 then
+    -- No selection, work on cursor note
+    local pattern = song:pattern(song.selected_pattern_index)
+    local track = pattern:track(song.selected_track_index)
+    local line = track:line(song.selected_line_index)
+    local note_col = line:note_column(song.selected_note_column_index)
+    
+    if note_col.instrument_value == 255 or note_col.note_value == 121 then
+      renoise.app():show_status("No note at cursor position to adjust velocity")
+      return
+    end
+    
+    local v = note_col.volume_value
     if v == 255 then v = 127 end
     v = v - 1
     if v >= 127 then
-      n.note_column.volume_value = 255
+      note_col.volume_value = 255
     else
-      n.note_column.volume_value = math.max(0, v)
+      note_col.volume_value = math.max(0, v)
     end
+    renoise.app():show_status("Decreased velocity of cursor note by 1")
+  else
+    -- Work on selected notes
+    for _, n in ipairs(notes) do
+      local v = n.note_column.volume_value
+      if v == 255 then v = 127 end
+      v = v - 1
+      if v >= 127 then
+        n.note_column.volume_value = 255
+      else
+        n.note_column.volume_value = math.max(0, v)
+      end
+    end
+    renoise.app():show_status("Decreased velocity of selected notes by 1")
   end
-  renoise.app():show_status("Decreased velocity of selected notes by 1")
 end
 
 function M.focus_automation_editor_for_selection()
@@ -756,122 +860,6 @@ function M.convert_pattern_to_automation()
   end
 
   renoise.app():show_status("Converted pattern effect columns to automation curve and cleared effect columns.")
-end
-
--- Record selected notes into target instrument's sample
-function M.record_selection_to_instrument_sample()
-  local song = renoise.song()
-  
-  -- Get current selection
-  local sel = song.selection_in_pattern
-  if not sel then
-    renoise.app():show_status("No pattern selection found.")
-    return
-  end
-  
-  -- Check if we have a valid selection
-  if sel.start_line >= sel.end_line then
-    renoise.app():show_status("Invalid selection: start line must be before end line.")
-    return
-  end
-  
-  -- Get selected instrument and sample
-  local selected_instr = song:instrument(song.selected_instrument_index)
-  local selected_sample = nil
-  
-  -- Create a new sample if the instrument has no samples or if the first sample has no data
-  if #selected_instr.samples == 0 then
-    selected_sample = selected_instr:insert_sample_at(1)
-    renoise.app():show_status("Created new sample in instrument " .. song.selected_instrument_index)
-  else
-    selected_sample = selected_instr:sample(1) -- Use first sample for now
-    if not selected_sample.sample_buffer.has_sample_data then
-      -- Create a new sample if the existing one has no data
-      selected_sample = selected_instr:insert_sample_at(1)
-      renoise.app():show_status("Created new sample in instrument " .. song.selected_instrument_index .. " (replaced empty sample)")
-    end
-  end
-  
-  -- Store original mute states
-  local original_mute_states = {}
-  for i = 1, #song.tracks do
-    original_mute_states[i] = song.tracks[i].mute_state
-  end
-  
-  -- Solo the tracks that have notes in the selection
-  local tracks_to_solo = {}
-  local pattern = song:pattern(song.sequencer:pattern(song.selected_sequence_index))
-  
-  for track_idx = sel.start_track, sel.end_track do
-    local track = song.tracks[track_idx]
-    local pattern_track = pattern:track(track_idx)
-    local has_notes = false
-    
-    -- Check if this track has any notes in the selection
-    for line_idx = sel.start_line, sel.end_line do
-      local line = pattern_track:line(line_idx)
-      for nc = 1, #line.note_columns do
-        local note_col = line:note_column(nc)
-        if not note_col.is_empty and note_col.note_value < 120 then -- 120+ are commands
-          has_notes = true
-          break
-        end
-      end
-      if has_notes then break end
-    end
-    
-    if has_notes then
-      table.insert(tracks_to_solo, track_idx)
-      track.mute_state = renoise.Track.MUTE_STATE_ACTIVE
-    else
-      track.mute_state = renoise.Track.MUTE_STATE_MUTED
-    end
-  end
-  
-  if #tracks_to_solo == 0 then
-    renoise.app():show_status("No tracks with notes found in selection.")
-    -- Restore original mute states
-    for i = 1, #song.tracks do
-      song.tracks[i].mute_state = original_mute_states[i]
-    end
-    return
-  end
-  
-  -- Calculate recording duration based on selection
-  local lines_per_beat = song.transport.lpb
-  local beats_in_selection = (sel.end_line - sel.start_line + 1) / lines_per_beat
-  local recording_duration = beats_in_selection * (60 / song.transport.bpm)
-  
-  -- Store current transport state
-  local original_pos = {
-    sequence = song.selected_sequence_index,
-    line = song.selected_line_index
-  }
-  
-  -- Set up playback position
-  song.selected_line_index = sel.start_line
-  
-  -- Try to open the sample record dialog if it's not visible
-  if not renoise.app().window.sample_record_dialog_is_visible then
-    -- Try to trigger the menu action to open the sample record dialog
-    renoise.app():show_status("Attempting to open sample record dialog...")
-    -- Note: This is a workaround - the actual menu path may vary
-    -- The user may need to manually open View > Sample Record Dialog if this doesn't work
-  end
-  
-  -- Start sample recording using the proper API
-  song.transport:start_sample_recording()
-  
-  -- Start playback
-  song.transport:start(renoise.Transport.PLAYMODE_CONTINUE_PATTERN)
-  
-  -- For now, just show a message about the recording duration
-  -- The user will need to manually stop recording after the calculated duration
-  renoise.app():show_status(("Started recording selection into instrument %d sample. Duration: %.2f seconds. Please stop recording manually after this duration.")
-    :format(song.selected_instrument_index, recording_duration))
-  
-  renoise.app():show_status(("Recording selection into instrument %d sample... Duration: %.2f seconds")
-    :format(song.selected_instrument_index, recording_duration))
 end
 
 return M 

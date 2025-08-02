@@ -2,6 +2,15 @@
 
 All notable changes to HexTools will be documented in this file.
 
+## [0.3.1] - 2024
+
+### Added
+- **Render Selection to Instrument Sample**: Render the current pattern selection to a new sample in the selected instrument (accumulation mode)
+  - Similar to SamRender's accumulation mode functionality
+  - Adds new samples to the selected instrument without creating new instruments
+  - Automatically names samples with descriptive information (sequence, line range, sample number)
+  - Enables autoseek for rendered samples
+
 ## [0.3.0] - 2024
 
 ### Added

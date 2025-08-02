@@ -281,6 +281,149 @@ M.jump_to_next_track     = jump_to_next_active_track
 M.jump_to_previous_track = jump_to_previous_active_track
 
 ----------------------------------------------------------------------
+-- new track navigation functions
+----------------------------------------------------------------------
+local function move_to_next_track_skip_collapsed()
+  local song = renoise.song()
+  if auto_collapse_before_jump and not is_pattern_collapsed() then
+    collapse_null_tracks_in_pattern()
+  end
+
+  local cur  = song.selected_track_index
+  local tot  = #song.tracks
+
+  if last_jumped_track and last_jumped_track == cur then
+    handle_leaving_focused_track()
+  end
+
+  for i = cur + 1, tot do
+    local tr = song.tracks[i]
+    if tr.type == renoise.Track.TRACK_TYPE_SEQUENCER and not is_track_collapsed(i) then
+      song.selected_track_index = i
+      pattern_collapsed_state[song.selected_pattern_index] = false
+      return
+    end
+  end
+  for i = 1, cur - 1 do
+    local tr = song.tracks[i]
+    if tr.type == renoise.Track.TRACK_TYPE_SEQUENCER and not is_track_collapsed(i) then
+      song.selected_track_index = i
+      pattern_collapsed_state[song.selected_pattern_index] = false
+      return
+    end
+  end
+end
+
+local function jump_to_previous_track_with_solo()
+  local song = renoise.song()
+  if auto_collapse_before_jump and not is_pattern_collapsed() then
+    collapse_null_tracks_in_pattern()
+  end
+
+  local cur = song.selected_track_index
+  local tot = #song.tracks
+
+  if last_jumped_track and last_jumped_track == cur then
+    handle_leaving_focused_track()
+  end
+
+  -- First, mute all tracks
+  for i = 1, #song.tracks do
+    local track = song.tracks[i]
+    if track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
+      track.mute_state = renoise.Track.MUTE_STATE_MUTED
+    end
+  end
+
+  -- Find the previous track and solo it
+  for i = cur - 1, 1, -1 do
+    local tr = song.tracks[i]
+    if tr.type == renoise.Track.TRACK_TYPE_SEQUENCER and not is_track_collapsed(i) then
+      song.selected_track_index = i
+      tr.mute_state = renoise.Track.MUTE_STATE_ACTIVE
+      pattern_collapsed_state[song.selected_pattern_index] = false
+      renoise.app():show_status(string.format("Jumped to track %d and soloed it", i))
+      return
+    end
+  end
+  for i = tot, cur + 1, -1 do
+    local tr = song.tracks[i]
+    if tr.type == renoise.Track.TRACK_TYPE_SEQUENCER and not is_track_collapsed(i) then
+      song.selected_track_index = i
+      tr.mute_state = renoise.Track.MUTE_STATE_ACTIVE
+      pattern_collapsed_state[song.selected_pattern_index] = false
+      renoise.app():show_status(string.format("Jumped to track %d and soloed it", i))
+      return
+    end
+  end
+  
+  -- If no track found, unmute all tracks
+  for i = 1, #song.tracks do
+    local track = song.tracks[i]
+    if track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
+      track.mute_state = renoise.Track.MUTE_STATE_ACTIVE
+    end
+  end
+  renoise.app():show_status("No previous track found")
+end
+
+local function jump_to_next_track_with_solo()
+  local song = renoise.song()
+  if auto_collapse_before_jump and not is_pattern_collapsed() then
+    collapse_null_tracks_in_pattern()
+  end
+
+  local cur  = song.selected_track_index
+  local tot  = #song.tracks
+
+  if last_jumped_track and last_jumped_track == cur then
+    handle_leaving_focused_track()
+  end
+
+  -- First, mute all tracks
+  for i = 1, #song.tracks do
+    local track = song.tracks[i]
+    if track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
+      track.mute_state = renoise.Track.MUTE_STATE_MUTED
+    end
+  end
+
+  -- Find the next track and solo it
+  for i = cur + 1, tot do
+    local tr = song.tracks[i]
+    if tr.type == renoise.Track.TRACK_TYPE_SEQUENCER and not is_track_collapsed(i) then
+      song.selected_track_index = i
+      tr.mute_state = renoise.Track.MUTE_STATE_ACTIVE
+      pattern_collapsed_state[song.selected_pattern_index] = false
+      renoise.app():show_status(string.format("Jumped to track %d and soloed it", i))
+      return
+    end
+  end
+  for i = 1, cur - 1 do
+    local tr = song.tracks[i]
+    if tr.type == renoise.Track.TRACK_TYPE_SEQUENCER and not is_track_collapsed(i) then
+      song.selected_track_index = i
+      tr.mute_state = renoise.Track.MUTE_STATE_ACTIVE
+      pattern_collapsed_state[song.selected_pattern_index] = false
+      renoise.app():show_status(string.format("Jumped to track %d and soloed it", i))
+      return
+    end
+  end
+  
+  -- If no track found, unmute all tracks
+  for i = 1, #song.tracks do
+    local track = song.tracks[i]
+    if track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
+      track.mute_state = renoise.Track.MUTE_STATE_ACTIVE
+    end
+  end
+  renoise.app():show_status("No next track found")
+end
+
+M.jump_to_next_track_with_solo = jump_to_next_track_with_solo
+M.jump_to_previous_track_with_solo = jump_to_previous_track_with_solo
+
+----------------------------------------------------------------------
 -- null track navigation
 ----------------------------------------------------------------------
 local function focus_and_select_track(track_idx)

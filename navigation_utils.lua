@@ -75,7 +75,8 @@ function M.play_from_buffer()
   else
     -- Playing: stop playing and jump back to buffered line
     if not play_buffer then
-      renoise.app():show_status("No play buffer set. Cannot return to previous position.")
+      renoise.app():show_status("No play buffer set. Stopping playback.")
+      song.transport:stop()
       return
     end
     

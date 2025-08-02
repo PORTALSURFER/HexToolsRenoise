@@ -114,8 +114,8 @@ local function remap_selected_notes_to_this()
   instrument_utils.remap_selected_notes_to_this()
 end
 
-local function record_selection_to_instrument_sample()
-  instrument_utils.record_selection_to_instrument_sample()
+local function render_selection_to_instrument_sample()
+  render_utils.render_selection_to_instrument_sample()
 end
 
 local function focus_automation_editor_for_selection()
@@ -156,6 +156,18 @@ end
 
 local function jump_to_previous_collapsed_track()
   utils.jump_to_previous_collapsed_track()
+end
+
+local function move_to_next_track_skip_collapsed()
+  utils.move_to_next_track_skip_collapsed()
+end
+
+local function jump_to_previous_track_with_solo()
+  utils.jump_to_previous_track_with_solo()
+end
+
+local function jump_to_next_track_with_solo()
+  utils.jump_to_next_track_with_solo()
 end
 
 local function jump_quarter_up()
@@ -298,7 +310,7 @@ registration.register_menu_and_keybindings({
   prompt_and_merge_instruments = prompt_and_merge_instruments,
   prompt_and_remap_instruments = prompt_and_remap_instruments,
   remap_selected_notes_to_this = remap_selected_notes_to_this,
-  record_selection_to_instrument_sample = record_selection_to_instrument_sample,
+  render_selection_to_instrument_sample = render_selection_to_instrument_sample,
   increase_velocity = instrument_utils.increase_velocity,
   decrease_velocity = instrument_utils.decrease_velocity,
   increase_velocity_sensitive = instrument_utils.increase_velocity_sensitive,
@@ -312,6 +324,9 @@ registration.register_menu_and_keybindings({
   jump_to_previous_track = jump_to_previous_track,
   jump_to_next_collapsed_track = jump_to_next_collapsed_track,
   jump_to_previous_collapsed_track = jump_to_previous_collapsed_track,
+  move_to_next_track_skip_collapsed = move_to_next_track_skip_collapsed,
+  jump_to_previous_track_with_solo = jump_to_previous_track_with_solo,
+  jump_to_next_track_with_solo = jump_to_next_track_with_solo,
   jump_quarter_up = jump_quarter_up,
   jump_quarter_down = jump_quarter_down,
   toggle_auto_collapse_before_jump = toggle_auto_collapse_before_jump,

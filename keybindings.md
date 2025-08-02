@@ -11,7 +11,7 @@
 | Pattern Editor:Tools:Find Duplicate Single-Sample Instruments | `find_duplicate_single_sample_instruments` |
 | Pattern Editor:Tools:Merge Instruments | `prompt_and_merge_instruments` |
 | Pattern Editor:Tools:Remap Instruments | `prompt_and_remap_instruments` |
-| Pattern Editor:Tools:Record Selection To Instrument Sample | `record_selection_to_instrument_sample` |
+| Pattern Editor:Tools:Render Selection To Instrument Sample | `render_selection_to_instrument_sample` |
 | Pattern Editor:Tools:Increase Velocity | `increase_velocity` |
 | Pattern Editor:Tools:Decrease Velocity | `decrease_velocity` |
 | Pattern Editor:Tools:Increase Velocity (Sensitive) | `increase_velocity_sensitive` |
@@ -22,3 +22,8 @@
 | Pattern Editor:Tools:Nudge Note Up | `nudge_note_up` |
 | Pattern Editor:Tools:Nudge Note Down | `nudge_note_down` |
 | Pattern Editor:Tools:Expand Selection To Full Pattern | `expand_selection_to_full_pattern` |
+| Pattern Editor:Tools:Jump To Next Track (Skip Collapsed) | `jump_to_next_track` |
+| Pattern Editor:Tools:Jump To Previous Track (Skip Collapsed) | `jump_to_previous_track` |
+| Pattern Editor:Tools:Move To Next Track (Skip Collapsed) | `move_to_next_track_skip_collapsed` |
+| Pattern Editor:Tools:Jump To Next Track (With Solo) | `jump_to_next_track_with_solo` |
+| Pattern Editor:Tools:Jump To Previous Track (With Solo) | `jump_to_previous_track_with_solo` |

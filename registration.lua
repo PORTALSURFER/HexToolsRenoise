@@ -44,6 +44,18 @@ function M.register_menu_and_keybindings(handlers)
     invoke = handlers.jump_to_previous_track
   }
   renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Move To Next Track (Skip Collapsed)",
+    invoke = handlers.move_to_next_track_skip_collapsed
+  }
+  renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Jump To Previous Track (With Solo)",
+    invoke = handlers.jump_to_previous_track_with_solo
+  }
+  renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Jump To Next Track (With Solo)",
+    invoke = handlers.jump_to_next_track_with_solo
+  }
+  renoise.tool():add_menu_entry{
     name = "Main Menu:Tools:HexTools:Jump To Next Collapsed Track",
     invoke = handlers.jump_to_next_collapsed_track
   }
@@ -116,8 +128,8 @@ function M.register_menu_and_keybindings(handlers)
     invoke = handlers.remap_selected_notes_to_this
   }
   renoise.tool():add_menu_entry{
-    name = "Main Menu:Tools:HexTools:Record Selection To Instrument Sample",
-    invoke = handlers.record_selection_to_instrument_sample
+    name = "Main Menu:Tools:HexTools:Render Selection To Instrument Sample",
+    invoke = handlers.render_selection_to_instrument_sample
   }
 
   -- Pattern Management
@@ -226,8 +238,8 @@ function M.register_menu_and_keybindings(handlers)
     invoke = handlers.prompt_and_remap_instruments
   }
   renoise.tool():add_keybinding {
-    name = "Pattern Editor:Tools:Record Selection To Instrument Sample",
-    invoke = handlers.record_selection_to_instrument_sample
+    name = "Pattern Editor:Tools:Render Selection To Instrument Sample",
+    invoke = handlers.render_selection_to_instrument_sample
   }
   renoise.tool():add_keybinding {
     name = "Pattern Editor:Tools:Increase Velocity",
@@ -268,6 +280,18 @@ function M.register_menu_and_keybindings(handlers)
   renoise.tool():add_keybinding {
     name = "Pattern Editor:Tools:Jump To Previous Track (Skip Collapsed)",
     invoke = handlers.jump_to_previous_track
+  }
+  renoise.tool():add_keybinding {
+    name = "Pattern Editor:Tools:Move To Next Track (Skip Collapsed)",
+    invoke = handlers.move_to_next_track_skip_collapsed
+  }
+  renoise.tool():add_keybinding {
+    name = "Pattern Editor:Tools:Jump To Previous Track (With Solo)",
+    invoke = handlers.jump_to_previous_track_with_solo
+  }
+  renoise.tool():add_keybinding {
+    name = "Pattern Editor:Tools:Jump To Next Track (With Solo)",
+    invoke = handlers.jump_to_next_track_with_solo
   }
   renoise.tool():add_keybinding {
     name = "Pattern Editor:Tools:Toggle Auto-Collapse Before Jump",
