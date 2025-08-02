@@ -158,6 +158,10 @@ function M.register_menu_and_keybindings(handlers)
     invoke = handlers.expand_selection_to_full_pattern
   }
   renoise.tool():add_menu_entry{
+    name = "Main Menu:Tools:HexTools:Mute Notes Toggle",
+    invoke = handlers.mute_notes_toggle
+  }
+  renoise.tool():add_menu_entry{
     name = "Main Menu:Tools:HexTools:Color Selected Pattern Slots",
     invoke = handlers.color_selected_pattern_slots
   }
@@ -344,6 +348,10 @@ function M.register_menu_and_keybindings(handlers)
   renoise.tool():add_keybinding {
     name = "Pattern Editor:Tools:Color Selected Pattern Slots",
     invoke = handlers.color_selected_pattern_slots
+  }
+  renoise.tool():add_keybinding {
+    name = "Pattern Editor:Tools:Mute Notes Toggle",
+    invoke = handlers.mute_notes_toggle
   }
   renoise.tool():add_keybinding {
     name = "Pattern Matrix:Tools:Solo Selected Tracks",

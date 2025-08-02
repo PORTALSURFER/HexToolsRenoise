@@ -15,6 +15,103 @@ local utils = require("utils")
 -- Buffer for play/return state
 local play_return_state = nil
 
+-- Global buffer to store original velocities
+local velocity_buffer = {}
+
+local function mute_notes_toggle()
+  local song = renoise.song()
+  local pattern = song:pattern(song.selected_pattern_index)
+  local selection = song.selection_in_pattern
+  
+  local start_line, end_line, start_track, end_track
+  
+  if selection then
+    -- Use selection if available
+    start_line = selection.start_line
+    end_line = selection.end_line
+    start_track = selection.start_track
+    end_track = selection.end_track
+  else
+    -- Use cursor position if no selection
+    local cursor = song.cursor_pos_in_pattern
+    if not cursor then
+      renoise.app():show_status("No cursor position in pattern")
+      return
+    end
+    
+    start_line = cursor.line
+    end_line = cursor.line
+    start_track = cursor.track
+    end_track = cursor.track
+  end
+  
+  local pattern_key = string.format("pattern_%d", song.selected_pattern_index)
+  if not velocity_buffer[pattern_key] then
+    velocity_buffer[pattern_key] = {}
+  end
+  
+  local muted_count = 0
+  local unmuted_count = 0
+  
+  for track_idx = start_track, end_track do
+    local track = pattern:track(track_idx)
+    if not velocity_buffer[pattern_key][track_idx] then
+      velocity_buffer[pattern_key][track_idx] = {}
+    end
+    
+    for line_idx = start_line, end_line do
+      local line = track:line(line_idx)
+      
+      -- Check if this line has any notes before processing
+      local line_has_notes = false
+      for col_idx = 1, 12 do
+        local note_column = line:note_column(col_idx)
+        if note_column.note_value > 0 then
+          line_has_notes = true
+          break
+        end
+      end
+      
+      -- Only process lines that actually contain notes
+      if line_has_notes then
+        for col_idx = 1, 12 do
+          local note_column = line:note_column(col_idx)
+          local note_key = string.format("line_%d_col_%d", line_idx, col_idx)
+          
+          if note_column.note_value > 0 then
+            if note_column.volume_value > 0 then
+              -- Note has velocity, mute it and store original velocity
+              velocity_buffer[pattern_key][track_idx][note_key] = note_column.volume_value
+              note_column.volume_value = 0
+              muted_count = muted_count + 1
+            else
+              -- Note has no velocity, unmute it
+              local original_velocity = velocity_buffer[pattern_key][track_idx][note_key]
+              if original_velocity then
+                -- Restore original velocity
+                note_column.volume_value = original_velocity
+                velocity_buffer[pattern_key][track_idx][note_key] = nil
+              else
+                -- No stored velocity, set to full velocity
+                note_column.volume_value = 0xFF
+              end
+              unmuted_count = unmuted_count + 1
+            end
+          end
+        end
+      end
+    end
+  end
+  
+  if muted_count > 0 then
+    renoise.app():show_status(string.format("Muted %d notes", muted_count))
+  elseif unmuted_count > 0 then
+    renoise.app():show_status(string.format("Unmuted %d notes", unmuted_count))
+  else
+    renoise.app():show_status("No notes found in selection")
+  end
+end
+
 local function render_selection_to_new_track()
   render_utils.render_selection_to_new_track(false)
 end
@@ -750,8 +847,8 @@ local function merge_selected_pattern_matrix_tracks_destructive()
         local track_will_be_empty = true
         
         -- Check if this track has any content in patterns that are NOT being deleted
+        -- We need to check all patterns, but we can optimize by checking patterns in order
         for pattern_idx = 1, #song.sequencer.pattern_sequence do
-          -- Get the actual pattern index from the sequencer
           local actual_pattern_index = song.sequencer:pattern(pattern_idx)
           -- Skip patterns that are being deleted from this track
           if not patterns[actual_pattern_index] then
@@ -792,9 +889,6 @@ local function merge_selected_pattern_matrix_tracks_destructive()
           -- Delete the pattern from this track
           local pattern = song:pattern(pattern_idx)
           local track = pattern:track(track_idx)
-          
-          -- Debug: Show what we're clearing
-          renoise.app():show_status(string.format("Clearing pattern %d, track %d", pattern_idx, track_idx))
           
           -- Clear all lines in this specific track for this pattern
           for line_idx = 1, pattern.number_of_lines do
@@ -872,6 +966,14 @@ local function merge_selected_pattern_matrix_tracks_destructive()
       -- Pattern already rendered, just add C-4 notes for each occurrence
       local existing_instrument_idx = rendered_patterns[pattern_index]
       
+      -- Mark patterns for deletion in destructive mode
+      for _, slot in ipairs(slots) do
+        if not patterns_to_delete[slot.track] then
+          patterns_to_delete[slot.track] = {}
+        end
+        patterns_to_delete[slot.track][pattern_index] = true
+      end
+      
       -- Add C-4 notes for each occurrence of this pattern
       for i = 1, occurrences do
         local new_pattern = song:pattern(pattern_index)
@@ -948,6 +1050,14 @@ local function merge_selected_pattern_matrix_tracks_destructive()
         -- Only treat as alias if both tracks AND content match
         if content_matches then
           -- Same track combination with identical content, just add C-4 notes for each occurrence
+          -- Mark patterns for deletion in destructive mode
+          for _, slot in ipairs(slots) do
+            if not patterns_to_delete[slot.track] then
+              patterns_to_delete[slot.track] = {}
+            end
+            patterns_to_delete[slot.track][pattern_index] = true
+          end
+          
           for i = 1, occurrences do
             local new_pattern = song:pattern(pattern_index)
             local new_track = new_pattern:track(new_track_idx)
@@ -1125,7 +1235,8 @@ registration.register_menu_and_keybindings({
   solo_selected_pattern_matrix_tracks = solo_selected_pattern_matrix_tracks,
   merge_selected_pattern_matrix_tracks = merge_selected_pattern_matrix_tracks,
   merge_selected_pattern_matrix_tracks_destructive = merge_selected_pattern_matrix_tracks_destructive,
-  remove_empty_tracks = remove_empty_tracks
+  remove_empty_tracks = remove_empty_tracks,
+  mute_notes_toggle = mute_notes_toggle
 })
 
 -- Initialize track selection notifier after script is loaded
