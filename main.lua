@@ -463,6 +463,16 @@ local function merge_selected_pattern_matrix_tracks()
       end
     end
     
+    -- Double-check that selected tracks are unmuted before rendering
+    for _, slot in ipairs(slots) do
+      local track = song.tracks[slot.track]
+      if track and track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
+        if track.mute_state ~= renoise.Track.MUTE_STATE_ACTIVE then
+          track.mute_state = renoise.Track.MUTE_STATE_ACTIVE
+        end
+      end
+    end
+    
     -- Render the pattern
     local pattern = song:pattern(pattern_index)
     local start_pos = renoise.SongPos(slots[1].sequence, 1)
@@ -657,6 +667,16 @@ local function merge_selected_pattern_matrix_tracks_destructive()
         track.mute_state = renoise.Track.MUTE_STATE_ACTIVE
         -- Mark track for removal
         tracks_to_remove[slot.track] = true
+      end
+    end
+    
+    -- Double-check that selected tracks are unmuted before rendering
+    for _, slot in ipairs(slots) do
+      local track = song.tracks[slot.track]
+      if track and track.type == renoise.Track.TRACK_TYPE_SEQUENCER then
+        if track.mute_state ~= renoise.Track.MUTE_STATE_ACTIVE then
+          track.mute_state = renoise.Track.MUTE_STATE_ACTIVE
+        end
       end
     end
     
