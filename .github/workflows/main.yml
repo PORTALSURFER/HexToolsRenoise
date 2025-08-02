@@ -16,32 +16,62 @@ jobs:
         with:
           submodules: false
 
-      # 2. Generate a timestamp-based tag and filename
-      - name: Generate Tag and Filename
+      # 2. Read current version from manifest.xml and bump minor version
+      - name: Read and Bump Version
         run: |
-          DATESTAMP=$(date +'%Y-%m-%d')
-          TIMESTAMP=$(date +'%H-%M-%S')
-          TAG_NAME="release-${DATESTAMP}_${TIMESTAMP}"
-          FILENAME="com.hex.HexTools-${DATESTAMP}-${TIMESTAMP}.xrnx"
+          # Read current version from manifest.xml
+          CURRENT_VERSION=$(grep '<Version>' manifest.xml | sed 's/.*<Version>\(.*\)<\/Version>.*/\1/')
+          echo "Current version: $CURRENT_VERSION"
+          
+          # Parse version components
+          MAJOR=$(echo $CURRENT_VERSION | cut -d. -f1)
+          MINOR=$(echo $CURRENT_VERSION | cut -d. -f2)
+          PATCH=$(echo $CURRENT_VERSION | cut -d. -f3)
+          
+          # Bump minor version
+          NEW_MINOR=$((MINOR + 1))
+          NEW_VERSION="${MAJOR}.${NEW_MINOR}.${PATCH}"
+          
+          echo "New version: $NEW_VERSION"
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          
+          # Create tag name
+          TAG_NAME="v${NEW_VERSION}"
           echo "TAG_NAME=$TAG_NAME" >> $GITHUB_ENV
+          
+          # Create filename
+          FILENAME="com.hex.HexTools-${NEW_VERSION}.xrnx"
           echo "FILENAME=$FILENAME" >> $GITHUB_ENV
 
-      # 3. Zip the package using the dynamic filename
+      # 3. Update manifest.xml with new version
+      - name: Update manifest.xml
+        run: |
+          # Update version in manifest.xml
+          sed -i "s/<Version>.*<\/Version>/<Version>$NEW_VERSION<\/Version>/" manifest.xml
+          echo "Updated manifest.xml to version $NEW_VERSION"
+
+      # 4. Commit the version bump
+      - name: Commit version bump
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add manifest.xml
+          git commit -m "Bump version to $NEW_VERSION"
+
+      # 5. Zip the package using the version-based filename
       - name: Zip XRNX Package
         run: |
           zip -r "${{ env.FILENAME }}" .
 
-      # 4. Create and Push Git Tag
+      # 6. Create and Push Git Tag
       - name: Create and Push Tag
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
           git tag "$TAG_NAME"
           git push origin "$TAG_NAME"
 
-      # 5. Create GitHub Release
+      # 7. Create GitHub Release
       - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@v1
@@ -53,7 +83,7 @@ jobs:
           draft: false
           prerelease: false
 
-      # 6. Upload Release Asset
+      # 8. Upload Release Asset
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
         env:
