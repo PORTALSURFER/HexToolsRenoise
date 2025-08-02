@@ -1,0 +1,112 @@
+# AI Agent Instructions for HexTools Documentation
+
+## Documentation Structure
+
+This project uses a specific documentation structure that must be maintained:
+
+### **File Organization**
+- `README.md` - **Overview only** - Quick start, key features, recent updates, links to other docs
+- `documentation.md` - **Complete reference** - Detailed feature descriptions, usage guides, keymaps
+- `CHANGELOG.md` - **Version history** - Detailed changelog with technical details
+- `keybindings.md` - **Keybinding reference** - Complete list of all available keybindings
+
+### **README.md Guidelines**
+- **Keep it concise** - Overview only, no detailed feature descriptions
+- **Include links** - Always link to `documentation.md` and `CHANGELOG.md`
+- **Recent updates** - Include latest version highlights
+- **Quick workflows** - Brief workflow examples
+- **No installation instructions** - Unless verified and correct
+
+### **documentation.md Guidelines**
+- **Complete feature descriptions** - Move all detailed feature info here
+- **Usage tips and workflows** - Detailed usage instructions
+- **Keymaps section** - Complete list of all available tools
+- **Organized sections** - Group by tool category (Track Management, Pattern Matrix, etc.)
+
+### **CHANGELOG.md Guidelines**
+- **Detailed version entries** - Include technical details
+- **Proper categorization** - Added, Changed, Technical sections
+- **Feature descriptions** - Explain what was added/changed
+- **Technical details** - Include implementation notes
+
+### **When Adding New Features**
+
+1. **Update README.md**:
+   - Add to "Key Features" if major
+   - Add to "Recent Updates" section
+   - Keep descriptions brief
+
+2. **Update documentation.md**:
+   - Add detailed feature description
+   - Add to appropriate section
+   - Include usage tips if applicable
+   - Add to keymaps list
+
+3. **Update CHANGELOG.md**:
+   - Add new version entry at top
+   - Categorize properly (Added/Changed/Technical)
+   - Include technical implementation details
+
+4. **Update keybindings.md**:
+   - Add new keybinding entries
+   - Maintain alphabetical order
+
+### **Documentation Maintenance Rules**
+
+- **Never remove existing documentation** without explicit user request
+- **Always maintain links** between documentation files
+- **Keep README.md clean** - move detailed content to documentation.md
+- **Update all relevant files** when adding features
+- **Maintain consistent formatting** across all files
+- **Use proper markdown syntax** for links and formatting
+
+### **Version Updates**
+
+When updating version numbers:
+1. Update version in README.md header
+2. Update version in documentation.md header
+3. Add new entry to CHANGELOG.md
+4. Update any version-specific references
+
+### **File Relationships**
+
+```
+README.md (Overview)
+├── Links to documentation.md (Complete reference)
+├── Links to CHANGELOG.md (Version history)
+└── Links to keybindings.md (Keybinding reference)
+
+documentation.md (Complete reference)
+├── Detailed feature descriptions
+├── Usage guides and workflows
+└── Complete keymaps listing
+
+CHANGELOG.md (Version history)
+├── Detailed version entries
+├── Technical implementation notes
+└── Feature categorization
+```
+
+### **Quality Standards**
+
+- **Consistency**: Maintain consistent terminology across all files
+- **Completeness**: Ensure all features are documented somewhere
+- **Accuracy**: Verify all information is correct and up-to-date
+- **Clarity**: Use clear, concise language
+- **Organization**: Keep logical structure and flow
+
+### **Common Mistakes to Avoid**
+
+- ❌ Adding detailed feature descriptions to README.md
+- ❌ Removing existing documentation without user request
+- ❌ Breaking links between documentation files
+- ❌ Inconsistent formatting across files
+- ❌ Missing updates to keybindings.md
+- ❌ Incomplete changelog entries
+
+### **When in Doubt**
+
+- **Ask the user** for clarification on documentation preferences
+- **Maintain existing structure** unless explicitly told to change
+- **Update all related files** when making changes
+- **Test links** to ensure they work properly 

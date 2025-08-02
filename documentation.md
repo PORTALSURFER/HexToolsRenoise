@@ -1,7 +1,7 @@
 # HexTools Documentation
 
 **Author:** Hex  
-**Version:** v0.3.3  
+**Version:** v0.4.0  
 
 Complete documentation for HexTools features and functionality.
 
@@ -71,6 +71,11 @@ HexTools adds the following utilities and workflow enhancements to Renoise:
 ### **Note Velocity Tools**
 - **Increase/Decrease Velocity**: Adjust velocity of selected notes by 10 or by 1 for fine adjustment
 - **Sensitive Velocity Control**: Precise velocity adjustment for detailed editing
+- **Mute Notes Toggle**: Toggle note velocity between 0 and original/full velocity
+  - Mutes notes with velocity > 0 by setting velocity to 0
+  - Unmutes notes with velocity = 0 by restoring original velocity or setting to full
+  - Buffers original velocities for accurate restoration
+  - Works on pattern selection in the pattern editor
 
 ### **Automation Tools**
 - **Focus Automation Editor**: Focus the automation editor for the current pattern selection
@@ -134,6 +139,7 @@ All features below can be mapped to custom keys in Renoise via the Preferences >
 - `Pattern Editor:Tools:Jump To Next Track (With Solo)`
 - `Pattern Editor:Tools:Jump To Previous Track (With Solo)`
 - `Pattern Editor:Tools:Color Selected Pattern Slots`
+- `Pattern Editor:Tools:Mute Notes Toggle`
 - `Pattern Matrix:Tools:Remove Empty Tracks`
 - `Pattern Matrix:Tools:Solo Selected Tracks`
 - `Pattern Matrix:Tools:Merge Selected Tracks`
@@ -176,6 +182,7 @@ All features below can be mapped to custom keys in Renoise via the Preferences >
 - `Main Menu:Tools:HexTools:Nudge Note Up`
 - `Main Menu:Tools:HexTools:Nudge Note Down`
 - `Main Menu:Tools:HexTools:Expand Selection To Full Pattern`
+- `Main Menu:Tools:HexTools:Mute Notes Toggle`
 - `Main Menu:Tools:HexTools:Color Selected Pattern Slots`
 - `Main Menu:Tools:HexTools:Focus Automation Editor for Selection`
 - `Main Menu:Tools:HexTools:Convert Automation To Pattern`

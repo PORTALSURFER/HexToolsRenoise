@@ -2,6 +2,28 @@
 
 All notable changes to HexTools will be documented in this file.
 
+## [0.4.0] - 2024
+
+### Added
+- **Mute Notes Toggle**: Toggle note velocity between 0 and original/full velocity
+  - Mutes notes with velocity > 0 by setting velocity to 0
+  - Unmutes notes with velocity = 0 by restoring original velocity or setting to full
+  - Buffers original velocities for accurate restoration
+  - Works on pattern selection in the pattern editor
+  - Supports cursor mode when no selection is available
+
+### Changed
+- **Enhanced Destructive Merge**: Fixed pattern clearing for all alias occurrences
+  - Pattern-level aliases now properly clear all selected sequence positions
+  - Track-level aliases now properly clear all selected sequence positions
+  - Complete cleanup of all selected pattern occurrences
+  - Consistent behavior across both alias detection types
+
+### Technical
+- **Improved Pattern Deletion Logic**: Uses sequence-specific pattern indices for accurate deletion
+- **Enhanced Alias Detection**: Proper cleanup of all selected pattern occurrences
+- **Optimized Mute Notes**: Pre-scans lines for notes to avoid unnecessary processing
+
 ## [0.3.3] - 2024
 
 ### Added
