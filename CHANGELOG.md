@@ -2,6 +2,30 @@
 
 All notable changes to HexTools will be documented in this file.
 
+## [0.3.3] - 2024
+
+### Added
+- **Track-Level Alias Detection**: Advanced optimization for Pattern Matrix merge operations
+  - Detects when the same track combination appears in consecutive patterns
+  - Skips re-rendering when identical track selections are found
+  - Maintains chronological order based on sequence position
+  - Dramatically improves performance for repeated track combinations
+  - Works alongside existing pattern-level alias detection
+
+### Changed
+- **Enhanced Pattern Matrix Merge**: Added intelligent alias detection at multiple levels
+  - Pattern-level aliases: Skip rendering if same pattern already rendered
+  - Track-level aliases: Skip rendering if same track combination already rendered
+  - Chronological processing: Patterns processed in sequence order, not pattern index order
+  - Optimized C-4 placement: Adds notes for each occurrence while avoiding redundant rendering
+- **Improved Rendering Performance**: Significantly faster processing for repeated track combinations
+- **Better Sequence Handling**: Fixed pattern processing order to maintain chronological timeline
+
+### Technical
+- **Multi-Level Alias Detection**: Implemented both pattern-level and track-level alias detection
+- **Enhanced Track Combination Tracking**: Robust tracking of track combinations for alias detection
+- **Optimized Rendering Pipeline**: Reduced redundant rendering operations
+
 ## [0.3.2] - 2024
 
 ### Added

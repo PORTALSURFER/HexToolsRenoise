@@ -1,10 +1,27 @@
 # HexTools for Renoise
 
 **Author:** Hex  
-**Version:** v0.3.2  
-**Latest Release:** [v0.3.2](https://github.com/hex/HexTools/releases/tag/v0.3.2)
+**Version:** v0.3.3  
+**Latest Release:** [v0.3.3](https://github.com/hex/HexTools/releases/tag/v0.3.3)
 
 Collection of useful tools for the Renoise digital audio workstation.
+
+## Recent Updates (v0.3.3)
+
+### **New Features**
+- **Track-Level Alias Detection**: Advanced optimization for Pattern Matrix merge operations
+  - Detects when the same track combination appears in consecutive patterns
+  - Skips re-rendering when identical track selections are found
+  - Maintains chronological order based on sequence position
+  - Dramatically improves performance for repeated track combinations
+  - Works alongside existing pattern-level alias detection
+
+### **Improvements**
+- **Enhanced Pattern Matrix Merge**: Added intelligent alias detection at multiple levels
+  - Pattern-level aliases: Skip rendering if same pattern already rendered
+  - Track-level aliases: Skip rendering if same track combination already rendered
+  - Chronological processing: Patterns processed in sequence order, not pattern index order
+  - Optimized C-4 placement: Adds notes for each occurrence while avoiding redundant rendering
 
 ## Recent Updates (v0.3.2)
 
@@ -87,6 +104,9 @@ HexTools adds the following utilities and workflow enhancements to Renoise:
   - Automatically skips patterns with no musical notes in selected tracks
   - Filters out special Renoise note values (only counts actual musical notes 1-120)
   - Sequential rendering to avoid "rendering already in progress" errors
+  - **Pattern-level alias detection**: Skips re-rendering if same pattern already processed
+  - **Track-level alias detection**: Skips re-rendering if same track combination already processed
+  - **Chronological processing**: Patterns processed in sequence order, not pattern index order
   - Accessible via Pattern Matrix menu or keybinding
 - **Pattern Matrix Track Merge Destructive**: Same as merge but removes source tracks
   - Performs the same merge operation as above
